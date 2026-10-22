@@ -33,9 +33,41 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/MusicEventManagementSystem/MusicEventManagementSystem.sln"
+                "${workspaceFolder}/MusicEventManagementSystem/MusicEventManagementSystem.API",
+                "--launch-profile",
+                "http"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "client: npm install",
+            "type": "shell",
+            "command": "npm install",
+            "options": {
+                "cwd": "${workspaceFolder}/MusicEventManagementSystem/MusicEventManagementSystem.Client"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "client: dev",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/MusicEventManagementSystem/MusicEventManagementSystem.Client"
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "client: build",
+            "type": "shell",
+            "command": "npm run build",
+            "options": {
+                "cwd": "${workspaceFolder}/MusicEventManagementSystem/MusicEventManagementSystem.Client"
+            },
+            "problemMatcher": [
+                "$tsc"
+            ]
         }
     ]
 }
