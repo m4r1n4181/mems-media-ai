@@ -59,3 +59,22 @@ Mean ± std over folds:
 | **R7 ranker** | **0.142 ± 0.004** | **0.241 ± 0.021** | **0.300 ± 0.030** | **0.131 ± 0.005** |
 
 The ranker beats the heuristic in every fold. With only two folds the std is a rough estimate.
+
+## Final test (run once, model frozen at R7)
+
+Trained on Jul–Sep + Oct–Dec 2018, evaluated on new paid collaborations Jan–Apr 2019 (5,502 brands).
+April 2019 is incomplete (data collection ended), so some real collaborations are missing for all models.
+
+| model | candidate recall | Recall@10 | Recall@50 | Recall@100 | NDCG@50 |
+|---|---|---|---|---|---|
+| kNN | — | 0.075 | 0.145 | 0.188 | 0.070 |
+| heuristic (organic mentions, kNN breaks ties) | — | 0.124 | 0.214 | 0.261 | 0.113 |
+| **R7 ranker** | 0.518 | **0.150** | **0.276** | **0.344** | **0.142** |
+| gain over heuristic | | +21% | +29% | +32% | +26% |
+
+Recall@50 by brand history: 1–9 creators 0.245 → **0.333**, 10–99 0.226 → **0.284**, 100+ 0.142 → **0.194**.
+
+The test numbers are slightly **higher** than validation. Likely reasons: the model is trained on more recent data
+(Jul–Dec 2018 instead of Apr–Sep), brands have more history by 2019, and candidate recall is higher (0.52). The gain
+over the heuristic (+29%) is consistent with walk-forward (+21%, +23%), which is the main evidence that it generalises.
+Popularity bias is visible: for the largest brands the ranker's top-10 median is ~46k followers vs ~26k for the heuristic.
