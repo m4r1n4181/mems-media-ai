@@ -17,6 +17,7 @@ from mlrec import baselines as B
 from mlrec import candidates as C
 from mlrec import features as F
 from mlrec import ranker as R
+from mlrec.lightgcn import LightGCN
 from mlrec import tracking
 from mlrec.config import ARTIFACTS_DIR
 from mlrec.data import load_posts, to_interactions
@@ -25,6 +26,9 @@ from mlrec.split import make_task
 
 # Several earlier windows are stacked for training: more examples of "who started working with whom".
 WINDOWS = {
+    # walk-forward fold 1: same setup shifted one quarter back
+    "fold1": {"train": [("2018-01-01", "2018-04-01"), ("2018-04-01", "2018-07-01")],
+              "eval": ("2018-07-01", "2018-10-01")},
     "val":  {"train": [("2018-04-01", "2018-07-01"), ("2018-07-01", "2018-10-01")],
              "eval": ("2018-10-01", "2019-01-01")},
     "test": {"train": [("2018-07-01", "2018-10-01"), ("2018-10-01", "2019-01-01")],
@@ -35,6 +39,8 @@ SVD_TOP = 300   # extra candidates per brand from SVD embeddings
 KNN_TOP = 500   # candidates per brand from brand kNN
 NICHE_TOP = 300 # experienced, recently active creators per niche
 SVD_DIMS = 128
+LGCN_TOP = 300  # extra candidates per brand from LightGCN
+LGCN = dict(dim=128, layers=2, epochs=30, batch=32768, lr=1e-2, half_life_days=None)  # time decay helps LightGCN alone (B7) but not the ranker (R8)
 EXP_ID = sys.argv[3] if len(sys.argv) > 3 else None
 CANDIDATE_RECALL = {}
 mode = sys.argv[1] if len(sys.argv) > 1 else "val"
@@ -59,13 +65,16 @@ def prepare(window, train: bool, chunk: int = 500):
     idx = B.Index(task, eval_brands)
     niches = F.niche_vectors(task, posts[posts.ts < task.cutoff], set(brands.brand))
     svd = C.SVDEmbeddings(SVD_DIMS).fit(task, idx)
-    fb = F.FeatureBuilder(task, posts, creators, brands, niches, svd, idx)
+    lgcn = LightGCN(verbose=False, **LGCN).fit(task, idx)
+    log(f"{window}: LightGCN trained")
+    fb = F.FeatureBuilder(task, posts, creators, brands, niches, svd, idx, lgcn=lgcn)
     knn = B.BrandKNN().fit(task, idx)
     kept, n_cand, n_hit = [], 0, 0
     for start in range(0, len(eval_brands), chunk):
         names = eval_brands[start:start + chunk]
         pool = pd.concat([C.niche_pool(task, names, *niches, per_niche=NICHE_TOP),
-                          svd.top_pairs(idx, names, SVD_TOP)])
+                          svd.top_pairs(idx, names, SVD_TOP),
+                          lgcn.top_pairs(idx, names, LGCN_TOP)])
         cand = C.generate(task, idx, names, knn_top=KNN_TOP, extra=pool, knn=knn)
         df = F.add_labels(fb.transform(cand), task)
         n_cand += len(df); n_hit += int(df.label.sum())
@@ -126,7 +135,7 @@ log("saved")
 params = {
     "mode": mode, "train_windows": WINDOWS[mode]["train"], "eval_window": WINDOWS[mode]["eval"],
     "neg_per_brand": NEG_PER_BRAND, "knn_top": KNN_TOP, "svd_top": SVD_TOP, "niche_top": NICHE_TOP,
-    "svd_dims": SVD_DIMS, "n_features": len(F.FEATURES), "features": ",".join(F.FEATURES),
+    "svd_dims": SVD_DIMS, "lgcn_top": LGCN_TOP, **{f"lgcn_{k}": v for k, v in LGCN.items()}, "n_features": len(F.FEATURES), "features": ",".join(F.FEATURES),
     **{f"lgbm_{k}": v for k, v in model.get_params().items()
        if k in ("n_estimators", "learning_rate", "num_leaves", "min_child_samples", "subsample", "colsample_bytree")},
 }

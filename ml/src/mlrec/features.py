@@ -11,7 +11,7 @@ FEATURES = [
     # pair: does the creator already know this brand?
     "org_mentions", "org_mentions_90d", "days_since_org_mention", "knn_score", "knn_rank",
     # pair: content fit
-    "niche_cosine", "same_niche", "svd_score", "svd_rank",
+    "niche_cosine", "same_niche", "svd_score", "svd_rank", "lgcn_score", "lgcn_rank",
     # creator: size, activity, experience, performance
     "log_followers", "posts_hist", "days_since_last_post", "paid_brands_total", "paid_brands_180d",
     "paid_share", "median_rel_eng", "paid_rel_eng",
@@ -85,9 +85,9 @@ class FeatureBuilder:
     Working in chunks keeps memory bounded: millions of candidate rows never exist at the same time."""
 
     def __init__(self, task: Task, posts: pd.DataFrame, creators: pd.DataFrame, brands: pd.DataFrame,
-                 niches: tuple, svd, idx):
+                 niches: tuple, svd, idx, lgcn=None):
         posts_hist = posts[posts.ts < task.cutoff]
-        self.task, self.svd, self.idx = task, svd, idx
+        self.task, self.svd, self.idx, self.lgcn = task, svd, idx, lgcn
         self.organic = _pair_organic(task).set_index(["brand", "creator_id"])
         self.creator_stats = _creator_stats(task, posts_hist, creators)
         self.brand_stats = _brand_stats(task, brands).join(_brand_partner_size(task, creators))
@@ -100,6 +100,11 @@ class FeatureBuilder:
         df["knn_rank"] = df.groupby("brand").knn_score.rank(ascending=False, method="min")
         df["svd_score"] = self.svd.pair_scores(self.idx, df.brand, df.creator_id)
         df["svd_rank"] = df.groupby("brand").svd_score.rank(ascending=False, method="min")
+        if self.lgcn is not None:
+            df["lgcn_score"] = self.lgcn.pair_scores(self.idx, df.brand, df.creator_id)
+            df["lgcn_rank"] = df.groupby("brand").lgcn_score.rank(ascending=False, method="min")
+        else:
+            df["lgcn_score"], df["lgcn_rank"] = np.nan, np.nan
 
         df = df.join(self.organic, on=["brand", "creator_id"])
         df = df.fillna({"org_mentions": 0, "org_mentions_90d": 0, "days_since_org_mention": 9999})
