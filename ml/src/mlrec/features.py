@@ -11,7 +11,7 @@ FEATURES = [
     # pair: does the creator already know this brand?
     "org_mentions", "org_mentions_90d", "days_since_org_mention", "knn_score", "knn_rank",
     # pair: content fit
-    "niche_cosine", "same_niche",
+    "niche_cosine", "same_niche", "svd_score", "svd_rank",
     # creator: size, activity, experience, performance
     "log_followers", "posts_hist", "days_since_last_post", "paid_brands_total", "paid_brands_180d",
     "paid_share", "median_rel_eng", "paid_rel_eng",
@@ -79,33 +79,42 @@ def niche_vectors(task: Task, posts_hist: pd.DataFrame, brand_names: set[str], n
     return W, B
 
 
-def build(task: Task, cand: pd.DataFrame, posts: pd.DataFrame, creators: pd.DataFrame, brands: pd.DataFrame,
-          niche_cache: tuple | None = None) -> tuple[pd.DataFrame, tuple]:
-    """Add all FEATURES to the candidate table. Returns (features, niche_cache)."""
-    posts_hist = posts[posts.ts < task.cutoff]
-    df = cand.copy()
-    df["knn_rank"] = df.groupby("brand").knn_score.rank(ascending=False, method="min")
+class FeatureBuilder:
+    """Computes everything that does not depend on the specific pair ONCE per task (creator stats,
+    brand stats, niche vectors, organic-mention table), then adds features to candidate chunks.
+    Working in chunks keeps memory bounded: millions of candidate rows never exist at the same time."""
 
-    df = df.merge(_pair_organic(task), on=["brand", "creator_id"], how="left")
-    df = df.fillna({"org_mentions": 0, "org_mentions_90d": 0, "days_since_org_mention": 9999})
-    df = df.join(_creator_stats(task, posts_hist, creators), on="creator_id")
-    df = df.join(_brand_stats(task, brands), on="brand")
-    df = df.join(_brand_partner_size(task, creators), on="brand")
-    df["size_gap"] = (df.log_followers - df.brand_partner_size).abs()
+    def __init__(self, task: Task, posts: pd.DataFrame, creators: pd.DataFrame, brands: pd.DataFrame,
+                 niches: tuple, svd, idx):
+        posts_hist = posts[posts.ts < task.cutoff]
+        self.task, self.svd, self.idx = task, svd, idx
+        self.organic = _pair_organic(task).set_index(["brand", "creator_id"])
+        self.creator_stats = _creator_stats(task, posts_hist, creators)
+        self.brand_stats = _brand_stats(task, brands).join(_brand_partner_size(task, creators))
+        W, B = niches
+        self.Wn = W.div(np.linalg.norm(W.values, axis=1), axis=0)
+        self.Bn = B.div(np.linalg.norm(B.values, axis=1), axis=0)
 
-    W, B = niche_cache or niche_vectors(task, posts_hist, set(brands.brand))
-    Wn = W.div(np.linalg.norm(W.values, axis=1), axis=0)
-    Bn = B.div(np.linalg.norm(B.values, axis=1), axis=0)
-    have = df.creator_id.isin(Wn.index) & df.brand.isin(Bn.index)
-    cos = np.full(len(df), np.nan)
-    cw = Wn.reindex(df.creator_id[have]).values
-    bw = Bn.reindex(df.brand[have]).values
-    cos[have.values] = (cw * bw).sum(axis=1)
-    df["niche_cosine"] = cos
-    same = np.full(len(df), np.nan)
-    same[have.values] = (cw.argmax(axis=1) == bw.argmax(axis=1)).astype(float)
-    df["same_niche"] = same
-    return df, (W, B)
+    def transform(self, cand: pd.DataFrame) -> pd.DataFrame:
+        df = cand.copy()
+        df["knn_rank"] = df.groupby("brand").knn_score.rank(ascending=False, method="min")
+        df["svd_score"] = self.svd.pair_scores(self.idx, df.brand, df.creator_id)
+        df["svd_rank"] = df.groupby("brand").svd_score.rank(ascending=False, method="min")
+
+        df = df.join(self.organic, on=["brand", "creator_id"])
+        df = df.fillna({"org_mentions": 0, "org_mentions_90d": 0, "days_since_org_mention": 9999})
+        df = df.join(self.creator_stats, on="creator_id").join(self.brand_stats, on="brand")
+        df["size_gap"] = (df.log_followers - df.brand_partner_size).abs()
+
+        have = (df.creator_id.isin(self.Wn.index) & df.brand.isin(self.Bn.index)).values
+        cw = self.Wn.reindex(df.creator_id[have]).values
+        bw = self.Bn.reindex(df.brand[have]).values
+        df["niche_cosine"] = np.nan
+        df.loc[have, "niche_cosine"] = (cw * bw).sum(axis=1)
+        df["same_niche"] = np.nan
+        df.loc[have, "same_niche"] = (cw.argmax(axis=1) == bw.argmax(axis=1)).astype(float)
+        df[FEATURES] = df[FEATURES].astype("float32")
+        return df
 
 
 def add_labels(df: pd.DataFrame, task: Task) -> pd.DataFrame:
