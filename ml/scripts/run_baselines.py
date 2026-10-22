@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import pandas as pd
 
 from mlrec import baselines as B
+from mlrec import tracking
 from mlrec.config import ARTIFACTS_DIR
 from mlrec.data import load
 from mlrec.evaluate import evaluate, summarize
@@ -50,3 +51,8 @@ print("\nRecall@50 by brand history (distinct creators before cutoff):\n", by_bu
 ARTIFACTS_DIR.mkdir(exist_ok=True)
 (ARTIFACTS_DIR / f"baselines_{split}.json").write_text(json.dumps(
     {"summary": summary.to_dict(orient="index"), "recall50_by_bucket": by_bucket.to_dict()}, indent=2))
+
+with tracking.run(f"baselines {split}", exp_id=sys.argv[2] if len(sys.argv) > 2 else None,
+                  params={"split": split, "window": SPLITS[split], "models": ",".join(models)}):
+    tracking.log_summary(summary, by_bucket)
+    tracking.mlflow.log_artifact(str(ARTIFACTS_DIR / f"baselines_{split}.json"))
