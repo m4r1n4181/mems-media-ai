@@ -57,9 +57,23 @@ namespace MusicEventManagementSystem.API.Services.Marketing
             _db.CampaignCreators.RemoveRange(existing.Where(e => e.Status == InfluencerStatus.Suggested));
             var keep = existing.Where(e => e.Status != InfluencerStatus.Suggested).Select(e => e.CreatorId).ToHashSet();
 
-            var recs = await _ml.RecommendAsync(campaign.Brand.Handle, req.Count, req.MinFollowers, req.MaxFollowers,
-                                                req.Niche, keep)
-                       ?? throw new InvalidStateException($"The recommender has no data for brand @{campaign.Brand.Handle}.");
+            var brand = campaign.Brand;
+            MlRecommendations? recs = null;
+            var modelVersionTag = "";
+            if (brand.KnownToModel)
+                recs = await _ml.RecommendAsync(brand.Handle, req.Count, req.MinFollowers, req.MaxFollowers, req.Niche, keep);
+            if (recs == null)
+            {
+                // Cold start: the model has never seen this brand, so fuse the lists of brands it resembles.
+                var similar = BrandRules.SplitSimilar(brand.SimilarBrands);
+                if (similar.Count == 0)
+                    throw new InvalidStateException(
+                        $"The recommender does not know @{brand.Handle} yet. Add similar brands to it on the Brands page.");
+                recs = await _ml.LookalikeAsync(similar, req.Count, req.MinFollowers, req.MaxFollowers, req.Niche, keep,
+                                                brand.Niche)
+                       ?? throw new InvalidStateException("None of this brand's similar brands is known to the recommender.");
+                modelVersionTag = "+lookalike";
+            }
 
             var ids = recs.Items.Select(i => i.CreatorId).ToList();
             var known = await _db.Creators.Where(c => ids.Contains(c.CreatorId)).ToDictionaryAsync(c => c.CreatorId);
@@ -86,7 +100,7 @@ namespace MusicEventManagementSystem.API.Services.Marketing
                     Rank = item.Rank,
                     Score = item.Score,
                     ReasonsJson = JsonSerializer.Serialize(item.Reasons),
-                    ModelVersion = recs.ModelVersion,
+                    ModelVersion = recs.ModelVersion + modelVersionTag,
                 });
             }
             await _db.SaveChangesAsync();
@@ -123,6 +137,9 @@ namespace MusicEventManagementSystem.API.Services.Marketing
             {
                 brand = campaign.Brand.Handle,
                 creator_id = cc.CreatorId,
+                // used by ml-service only when it does not know the brand (cold start)
+                brand_niche = campaign.Brand.Niche,
+                similar_brands = campaign.Brand.KnownToModel ? null : BrandRules.SplitSimilar(campaign.Brand.SimilarBrands),
                 campaign = new
                 {
                     name = campaign.Name,

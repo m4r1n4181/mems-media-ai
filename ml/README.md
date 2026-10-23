@@ -56,7 +56,8 @@ export INFLUENCER_DATA_DIR="$HOME/Desktop/influencer-data/_derived"
 python scripts/run_baselines.py val            # baselines on validation (~2 min)
 python scripts/walk_forward.py                 # walk-forward folds (~45 min)
 python scripts/train_ranker.py test            # final test, once (~25 min)
-python scripts/export_service.py               # final model -> ../ml-service/data (~30 min)
+python scripts/export_service.py               # final model -> ../ml-service/data (~40 min)
+python scripts/train_ranker.py val 300 R7 --save-top && python scripts/cold_start_simulation.py   # cold start
 mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 

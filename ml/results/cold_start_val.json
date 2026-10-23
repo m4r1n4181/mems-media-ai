@@ -1,0 +1,50 @@
+{
+  "window": [
+    "2018-10-01",
+    "2019-01-01"
+  ],
+  "brands": 6508,
+  "known_brands": 300,
+  "similar_brands": 3,
+  "k": 50,
+  "recall@50": {
+    "warm model (own history)": 0.2545,
+    "look-alikes: behaviour": 0.0485,
+    "look-alikes: niche + size": 0.0213,
+    "look-alikes: random": 0.0066,
+    "niche heuristic (no look-alikes)": 0.03
+  },
+  "recall@50_by_history": {
+    "1-9": {
+      "warm model (own history)": 0.295,
+      "look-alikes: behaviour": 0.0432,
+      "look-alikes: niche + size": 0.0145,
+      "look-alikes: random": 0.0056,
+      "niche heuristic (no look-alikes)": 0.0193
+    },
+    "10-99": {
+      "warm model (own history)": 0.2562,
+      "look-alikes: behaviour": 0.0516,
+      "look-alikes: niche + size": 0.0241,
+      "look-alikes: random": 0.0066,
+      "niche heuristic (no look-alikes)": 0.0333
+    },
+    "100+": {
+      "warm model (own history)": 0.1515,
+      "look-alikes: behaviour": 0.0451,
+      "look-alikes: niche + size": 0.0231,
+      "look-alikes: random": 0.009,
+      "niche heuristic (no look-alikes)": 0.0375
+    }
+  },
+  "sensitivity": {
+    "behaviour, 1 brands": 0.0438,
+    "niche + size, 1 brands": 0.0155,
+    "behaviour, 5 brands": 0.0534,
+    "niche + size, 5 brands": 0.0271,
+    "behaviour, 10 brands": 0.0546,
+    "niche + size, 10 brands": 0.0291,
+    "niche + size look-alikes + niche list": 0.0296,
+    "behaviour look-alikes + niche list": 0.0543
+  }
+}

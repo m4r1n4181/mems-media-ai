@@ -338,8 +338,13 @@ const CampaignInfluencers = () => {
             <div>
               <h2 className="text-lg font-semibold text-white">Find creators</h2>
               <p className="text-sm text-neutral-400">
-                Ranked for @{campaign.brandHandle ?? 'brand'} by the recommendation model. New suggestions replace the
-                ones you have not acted on.
+                {brand && !brand.knownToModel
+                  ? <>@{brand.handle} is new to the recommendation model, so suggestions combine the best creators of
+                    similar brands ({brand.similarBrands.map((s) => `@${s}`).join(', ')})
+                    {brand.niche ? ` and of the ${brand.niche} niche` : ''}. Expect fewer good matches than for brands
+                    with history; they improve once this brand has campaigns.</>
+                  : <>Ranked for @{campaign.brandHandle ?? 'brand'} by the recommendation model.</>}{' '}
+                New suggestions replace the ones you have not acted on.
               </p>
             </div>
           </div>

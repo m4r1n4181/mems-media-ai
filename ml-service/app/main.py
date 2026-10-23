@@ -81,6 +81,28 @@ def recommendations(brand: str, k: int = Query(20, ge=1, le=300),
             "items": items}
 
 
+class LookalikeRequest(BaseModel):
+    similar_brands: list[str] = Field(min_length=1, max_length=5)
+    k: int = Field(20, ge=1, le=300)
+    min_followers: int | None = Field(None, ge=0)
+    max_followers: int | None = Field(None, ge=0)
+    niche: str | None = None          # filter: only creators of this niche
+    exclude: list[str] = Field(default_factory=list)
+    brand_niche: str | None = None    # the new brand's own niche: its most active creators are fused in
+
+
+@app.post("/lookalike/recommendations")
+def lookalike_recommendations(req: LookalikeRequest):
+    """Cold start: recommendations for a new brand, fused from the lists of brands it resembles."""
+    s = store()
+    items = s.lookalike(req.similar_brands, req.k, req.min_followers, req.max_followers, req.niche,
+                        set(req.exclude) or None, brand_niche=req.brand_niche)
+    if items is None:
+        raise HTTPException(422, "None of the similar brands is known to the model")
+    return {"similar_brands": [b.lower().lstrip("@") for b in req.similar_brands],
+            "model_version": s.model_info["model_version"], "as_of": s.model_info["as_of"], "items": items}
+
+
 @app.get("/creators/{creator_id}")
 def creator(creator_id: str):
     c = store().get_creator(creator_id)
@@ -108,6 +130,9 @@ class DraftRequest(BaseModel):
     creator_id: str
     campaign: Campaign
     sender: Sender
+    # for a brand the model does not know (cold start): what the manager told us about it
+    brand_niche: str | None = None
+    similar_brands: list[str] | None = Field(None, max_length=5)
 
 
 @app.post("/outreach/draft")
@@ -115,9 +140,15 @@ def outreach_draft(req: DraftRequest):
     s = store()
     b = s.get_brand(req.brand.lower())
     c = s.get_creator(req.creator_id)
-    if b is None or c is None:
-        raise HTTPException(404, "Unknown brand or creator")
-    rec = s.recommend(b["brand"], k=300, exclude=None) or []
+    if c is None:
+        raise HTTPException(404, "Unknown creator")
+    if b is not None:
+        rec = s.recommend(b["brand"], k=300, exclude=None) or []
+    elif req.similar_brands:
+        b = {"brand": req.brand.lower().lstrip("@"), "niche": req.brand_niche}
+        rec = s.lookalike(req.similar_brands, k=300, brand_niche=req.brand_niche) or []
+    else:
+        raise HTTPException(404, "Unknown brand: send similar_brands for a brand the model does not know")
     reasons = next((r["reasons"] for r in rec if r["creator_id"] == req.creator_id), [])
     facts = build_facts(b, c, reasons, req.campaign.model_dump(mode="json"), req.sender.model_dump())
     return draft_email(make_client(settings), facts)

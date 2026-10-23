@@ -311,8 +311,15 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.Property<bool>("IsClient")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("KnownToModel")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Niche")
                         .HasColumnType("text");
+
+                    b.Property<string>("SimilarBrands")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<int?>("TypicalPartnerFollowers")
                         .HasColumnType("integer");

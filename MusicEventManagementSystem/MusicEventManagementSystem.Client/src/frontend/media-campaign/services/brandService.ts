@@ -1,4 +1,5 @@
-import type { Brand } from '../types/api/marketing';
+import type { Brand, CreateBrandRequest, KnownBrand } from '../types/api/marketing';
+import { request } from './influencerService';
 
 const API_BASE_URL = 'http://localhost:5255/api';
 
@@ -7,10 +8,16 @@ export class BrandService {
 
   // GET: api/Brands
   static async getAllBrands(): Promise<Brand[]> {
-    const response = await fetch(this.BASE_URL);
-    if (!response.ok) {
-      throw new Error(`Could not load brands (HTTP ${response.status}).`);
-    }
-    return await response.json();
+    return request(this.BASE_URL);
+  }
+
+  // GET: api/Brands/known (brands the recommender knows, for "similar brands")
+  static async getKnownBrands(): Promise<KnownBrand[]> {
+    return request(`${this.BASE_URL}/known`);
+  }
+
+  // POST: api/Brands
+  static async createBrand(data: CreateBrandRequest): Promise<Brand> {
+    return request(this.BASE_URL, { method: 'POST', body: JSON.stringify(data) });
   }
 }

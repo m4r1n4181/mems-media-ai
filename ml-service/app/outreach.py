@@ -38,6 +38,7 @@ FRIENDLY_REASON = {
     "size_fits_brand": "your audience size suits this campaign",
     "experienced": "you have experience with brand collaborations",
     "growing_engagement": "your recent posts are performing really well",
+    "lookalike": "your content is a great fit for brands in the same space as {brand}",
 }
 
 

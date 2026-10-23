@@ -17,8 +17,8 @@ namespace MusicEventManagementSystem.API.Services.Marketing
                             List<string>? RecentBrands);
     public record MlRecommendation(string CreatorId, int Rank, double Score, List<JsonElement> Reasons, MlCreator Creator);
     public record MlRecommendations(string Brand, string ModelVersion, string AsOf, List<MlRecommendation> Items);
-    public record MlBrand(string Brand, int Followers, string? Niche, int CreatorsMentioning, int RecentPaidCreators,
-                          int? TypicalPartnerFollowers);
+    public record MlBrand(string Brand, bool IsClient, int Followers, string? Niche, int CreatorsMentioning,
+                          int RecentPaidCreators, int? TypicalPartnerFollowers);
     public record MlChecks(bool Passed, List<string>? Issues);
     public record MlDraft(string Subject, string Body, string Provider, string? Model, MlChecks Checks, string? FallbackReason);
     public record MlLlmHealth(string? Provider, string? Model, bool Available, string? Error);
@@ -41,6 +41,34 @@ namespace MusicEventManagementSystem.API.Services.Marketing
         public Task<MlHealth?> HealthAsync(CancellationToken ct = default) => GetAsync<MlHealth>("health", ct);
 
         public Task<List<MlBrand>?> BrandsAsync(CancellationToken ct = default) => GetAsync<List<MlBrand>>("brands", ct);
+
+        public Task<MlBrand?> BrandAsync(string handle, CancellationToken ct = default) =>
+            GetAsync<MlBrand>($"brands/{Uri.EscapeDataString(handle)}", ct);
+
+        /// <summary>Cold start: recommendations fused from the lists of similar brands. Null if none of them is known.</summary>
+        public async Task<MlRecommendations?> LookalikeAsync(IEnumerable<string> similarBrands, int k, int? minFollowers,
+                                                             int? maxFollowers, string? niche, IEnumerable<string> exclude,
+                                                             string? brandNiche = null, CancellationToken ct = default)
+        {
+            var body = new
+            {
+                similar_brands = similarBrands.ToList(), k, min_followers = minFollowers, max_followers = maxFollowers,
+                niche = string.IsNullOrWhiteSpace(niche) ? null : niche, exclude = exclude.ToList(),
+                brand_niche = string.IsNullOrWhiteSpace(brandNiche) ? null : brandNiche,
+            };
+            try
+            {
+                var r = await _http.PostAsJsonAsync("lookalike/recommendations", body, Json, ct);
+                if (r.StatusCode == HttpStatusCode.UnprocessableEntity) return null;
+                if (!r.IsSuccessStatusCode)
+                    throw new MlServiceUnavailableException($"ml-service returned {(int)r.StatusCode}: {await r.Content.ReadAsStringAsync(ct)}");
+                return await r.Content.ReadFromJsonAsync<MlRecommendations>(Json, ct);
+            }
+            catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+            {
+                throw Unavailable(e, ct);
+            }
+        }
 
         public Task<MlCreator?> CreatorAsync(string creatorId, CancellationToken ct = default) =>
             GetAsync<MlCreator>($"creators/{Uri.EscapeDataString(creatorId)}", ct);

@@ -12,6 +12,27 @@ namespace MusicEventManagementSystem.API.DTOs.Marketing
         public int Followers { get; set; }
         public int? TypicalPartnerFollowers { get; set; }
         public int CampaignCount { get; set; }
+        public bool KnownToModel { get; set; }
+        public List<string> SimilarBrands { get; set; } = new();
+    }
+
+    public class CreateBrandDto
+    {
+        public string Handle { get; set; } = string.Empty;
+        public string? DisplayName { get; set; }
+        public string? Niche { get; set; }
+        public int? Followers { get; set; }
+        public int? TypicalPartnerFollowers { get; set; }
+        public List<string> SimilarBrands { get; set; } = new();
+    }
+
+    /// <summary>A brand the recommender knows (can be picked as "similar to" for a new brand).</summary>
+    public class KnownBrandDto
+    {
+        public string Handle { get; set; } = string.Empty;
+        public string? Niche { get; set; }
+        public int Followers { get; set; }
+        public bool IsClient { get; set; }
     }
 
     public class CreatorProfileDto

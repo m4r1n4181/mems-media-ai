@@ -104,3 +104,23 @@ in 3 months) 14%, creators with almost no brand history 5%. Reading 50 misses sh
 outside fashion and beauty. Ceiling estimates: niche pool from the brand's top-2 niches +2.3 points (≤300 extra
 candidates per brand), 300 most active paid creators +1.2, 1,000 most active +5.0. Details in
 [notebook 04](notebooks/04_error_analysis.ipynb).
+
+## Cold start: brands the model has never seen (validation, `scripts/cold_start_simulation.py`)
+
+Every validation brand is treated as new: its own ranking is not used, and the R7 lists of 3 similar brands
+(chosen among the 300 brands the app knows) are fused with reciprocal rank fusion, as ml-service does.
+Recall@50, mean over 6,508 brands:
+
+| method | Recall@50 |
+|---|---|
+| warm model: the brand's own R7 ranking (ceiling) | 0.255 |
+| look-alikes chosen by shared creators ("well-informed manager") | 0.049 |
+| niche heuristic: most active creators of the brand's niche | 0.030 |
+| look-alikes chosen by niche and closest size | 0.021 |
+| random look-alikes (control) | 0.007 |
+
+Sensitivity: 1 / 3 / 5 / 10 behaviour look-alikes give 0.044 / 0.049 / 0.053 / 0.055. Fusing the niche list in
+raises niche-and-size look-alikes to 0.030 and behaviour look-alikes to 0.054, so the app allows up to five similar
+brands and always fuses the brand's niche. **Lesson:** fusion works (7× random), but cold start costs about
+80% of the quality, and look-alikes chosen by surface traits (niche, size) are no better than the niche alone.
+Who a brand resembles *in behaviour* matters more than what it looks like.

@@ -228,6 +228,7 @@ namespace MusicEventManagementSystem.Data
             builder.Entity<Brand>().HasIndex(b => b.Handle).IsUnique();
             builder.Entity<Brand>().Property(b => b.Handle).HasMaxLength(100).IsRequired();
             builder.Entity<Brand>().Property(b => b.DisplayName).HasMaxLength(200).IsRequired();
+            builder.Entity<Brand>().Property(b => b.SimilarBrands).HasMaxLength(300);
 
             builder.Entity<Creator>().HasKey(c => c.CreatorId);
             builder.Entity<Creator>().Property(c => c.CreatorId).HasMaxLength(40);

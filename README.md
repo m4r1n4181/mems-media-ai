@@ -9,6 +9,8 @@ On top of that the app adds **influencer marketing**:
 1. **Find creators.** A recommendation model ranks Instagram creators for the campaign's brand. The manager can
    filter the list by audience size and niche. Each suggestion says *why* it was picked (for example "mentioned the
    brand 7 times without being paid" or "brands similar to this one have worked with this creator").
+   A **new client brand** can be added at any time. If the model knows it, its own history is used; if not
+   (cold start), the manager names up to five similar brands and their best creators are combined.
 2. **Pick.** The manager selects the creators worth contacting and dismisses the rest. Dismissed and contacted
    creators are not suggested again.
 3. **Write the e-mail with AI.** An LLM drafts a collaboration offer from facts the app holds: brand, campaign,
@@ -40,8 +42,8 @@ React client ──► .NET API ──► PostgreSQL
 
 Two stages, trained on a public research dataset of Instagram sponsored posts (2017–2019; creators are
 pseudonymized and no personal data is stored in this repository). **Candidate generation** collects about
-1,500 creators per brand from organic brand mentions, brand-to-brand similarity (item-kNN), the brand's niche,
-SVD embeddings and a LightGCN graph model. A **LightGBM LambdaRank** model then orders them using about 40
+1,100 creators per brand from organic brand mentions, brand-to-brand similarity (item-kNN), the brand's niche,
+SVD embeddings and a LightGCN graph model. A **LightGBM LambdaRank** model then orders them using 25
 features. On a held-out future period the model finds **27.6% of the brand's real new partners in its top 50**
 (Recall@50), against 21.4% for the best simple heuristic (+29%). The experiment log is in
 [ml/EXPERIMENTS.md](ml/EXPERIMENTS.md). Rankings are computed offline, so the app never waits for the model.

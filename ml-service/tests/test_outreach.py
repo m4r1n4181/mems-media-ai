@@ -78,3 +78,14 @@ def test_unparseable_output_is_retried(client, monkeypatch):
 def test_draft_validation(client):
     assert client.post("/outreach/draft", json={**REQ, "creator_id": "c_x"}).status_code == 404
     assert client.post("/outreach/draft", json={**REQ, "campaign": {"name": ""}}).status_code == 422
+
+
+def test_draft_for_new_brand_uses_similar_brands(client, monkeypatch):
+    monkeypatch.setattr(main, "make_client", lambda s: None)      # template, so the facts are easy to read
+    req = {**REQ, "brand": "sarajevoskin", "brand_niche": "beauty & makeup", "similar_brands": ["glowskin"]}
+    r = client.post("/outreach/draft", json=req).json()
+    assert r["facts"]["brand_handle"] == "@sarajevoskin"
+    assert r["facts"]["why_this_creator"][0] == "your content is a great fit for brands in the same space as @sarajevoskin"
+    assert "@sarajevoskin" in r["body"] and r["checks"]["passed"]
+    # without similar brands an unknown brand is still an error
+    assert client.post("/outreach/draft", json={**REQ, "brand": "sarajevoskin"}).status_code == 404

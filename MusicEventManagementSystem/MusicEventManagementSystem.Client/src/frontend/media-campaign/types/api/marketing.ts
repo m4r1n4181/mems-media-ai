@@ -6,6 +6,26 @@ export interface Brand {
   followers: number;
   typicalPartnerFollowers: number | null;
   campaignCount: number;
+  /** false = cold start: the recommender has never seen this brand and uses its similar brands */
+  knownToModel: boolean;
+  similarBrands: string[];
+}
+
+export interface CreateBrandRequest {
+  handle: string;
+  displayName?: string;
+  niche?: string;
+  followers?: number;
+  typicalPartnerFollowers?: number;
+  similarBrands: string[];
+}
+
+/** A brand the recommender knows: can be chosen as "similar to" for a new client. */
+export interface KnownBrand {
+  handle: string;
+  niche: string | null;
+  followers: number;
+  isClient: boolean;
 }
 
 export type InfluencerStatus = 'Suggested' | 'Selected' | 'Contacted' | 'Accepted' | 'Declined' | 'Dismissed';

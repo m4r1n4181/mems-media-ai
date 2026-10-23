@@ -10,7 +10,7 @@ import type {
 const API_BASE_URL = 'http://localhost:5255/api';
 
 // The API answers errors with { message }, so the UI can show what actually went wrong.
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {

@@ -6,6 +6,7 @@
     python scripts/train_ranker.py val 300 R9 --affinity=replace   # niche pool -> affinity pool (+ feature)
     python scripts/train_ranker.py val 300 R10 --affinity=add      # affinity pool added (+ feature)
     python scripts/train_ranker.py val 300 A2 --no-niche           # ablation: no niche pool, no niche features
+    python scripts/train_ranker.py val 300 R7 --save-top            # R7 + per-brand top-300 lists (cold start)
 """
 import json
 import sys
@@ -41,6 +42,7 @@ WINDOWS = {
 # --affinity=add|replace (see affinity.py and notebook 04); without it the script trains the final R7 model
 AFFINITY = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--affinity=")), "off")
 NO_NICHE = "--no-niche" in sys.argv
+SAVE_TOP = "--save-top" in sys.argv     # also write each brand's top-300 list (for the cold-start simulation)
 sys.argv = [a for a in sys.argv if not a.startswith("--")]
 assert AFFINITY in ("off", "add", "replace"), AFFINITY
 FEATS = F.FEATURES + (["partner_affinity"] if AFFINITY != "off" else [])
@@ -122,6 +124,13 @@ eval_task, eval_df = prepare(WINDOWS[mode]["eval"], train=False)
 model = R.train(train_df, features=FEATS)
 log("ranker trained")
 eval_df["ranker"] = model.predict(eval_df[FEATS])
+if SAVE_TOP:
+    top = (eval_df.sort_values(["brand", "ranker"], ascending=[True, False]).groupby("brand").head(300)
+           [["brand", "creator_id", "ranker", "label"]].rename(columns={"ranker": "score"}))
+    top["rank"] = top.groupby("brand").cumcount() + 1
+    ARTIFACTS_DIR.mkdir(exist_ok=True)
+    top.to_parquet(ARTIFACTS_DIR / f"rankings_{TAG}.parquet", index=False)
+    log(f"saved top-300 rankings for {top.brand.nunique():,} brands")
 
 # Baselines re-scored on the same candidate table, for an apples-to-apples comparison
 eval_df["organic only"] = (eval_df.org_mentions_90d * 1e3 + eval_df.org_mentions * 10

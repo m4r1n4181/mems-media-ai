@@ -29,3 +29,34 @@ def test_recommendation_filters(client):
 def test_creator_profile(client):
     assert client.get("/creators/c_0000000001").json()["size_tier"] == "micro"
     assert client.get("/creators/c_x").status_code == 404
+
+
+# ---------- cold start: brands the model has never seen ----------
+def test_lookalike_fuses_lists_of_similar_brands(client):
+    r = client.post("/lookalike/recommendations", json={"similar_brands": ["@GlowSkin", "fitfuel"]}).json()
+    items = r["items"]
+    # c_2 is #3 for glowskin and #1 for fitfuel: 1/63 + 1/61 beats a single #1 (1/61)
+    assert [i["creator_id"] for i in items] == ["c_0000000002", "c_0000000000", "c_0000000001"]
+    assert [i["rank"] for i in items] == [1, 2, 3]
+    assert items[0]["reasons"][0] == {"code": "lookalike", "brands": ["fitfuel", "glowskin"],
+                                      "text": "Ranked highly for similar brands: @fitfuel, @glowskin"}
+    assert r["similar_brands"] == ["glowskin", "fitfuel"]
+
+
+def test_lookalike_filters_and_unknown_brands(client):
+    post = lambda **kw: client.post("/lookalike/recommendations", json={"similar_brands": ["glowskin"], **kw})
+    assert [i["creator_id"] for i in post(max_followers=50000, exclude=["c_0000000000"]).json()["items"]] == \
+        ["c_0000000001"]
+    assert client.post("/lookalike/recommendations", json={"similar_brands": ["nope"]}).status_code == 422
+    assert client.post("/lookalike/recommendations", json={"similar_brands": []}).status_code == 422
+
+
+def test_lookalike_fuses_the_brand_niche(client):
+    r = client.post("/lookalike/recommendations",
+                    json={"similar_brands": ["fitfuel"], "brand_niche": "beauty & makeup"}).json()
+    by_id = {i["creator_id"]: i for i in r["items"]}
+    assert set(by_id) == {"c_0000000000", "c_0000000001", "c_0000000002"}
+    # c_0 comes only from the niche list, c_2 only from the similar brand
+    assert [x["code"] for x in by_id["c_0000000000"]["reasons"]] == ["same_niche"]
+    assert by_id["c_0000000000"]["reasons"][0]["text"] == "Same niche as the brand: beauty & makeup"
+    assert by_id["c_0000000002"]["reasons"][0]["code"] == "lookalike"
