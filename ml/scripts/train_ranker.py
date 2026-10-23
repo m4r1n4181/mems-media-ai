@@ -3,6 +3,9 @@
     python scripts/train_ranker.py          # train on Jul–Sep 2018, evaluate on Oct–Dec 2018
     python scripts/train_ranker.py test     # train on Oct–Dec 2018, evaluate once on Jan–Apr 2019
     python scripts/train_ranker.py val 300 R7   # optional: negatives per brand, experiment id for MLflow
+    python scripts/train_ranker.py val 300 R9 --affinity=replace   # niche pool -> affinity pool (+ feature)
+    python scripts/train_ranker.py val 300 R10 --affinity=add      # affinity pool added (+ feature)
+    python scripts/train_ranker.py val 300 A2 --no-niche           # ablation: no niche pool, no niche features
 """
 import json
 import sys
@@ -13,13 +16,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pandas as pd
 
+from mlrec import affinity as A
 from mlrec import baselines as B
 from mlrec import candidates as C
 from mlrec import features as F
 from mlrec import ranker as R
 from mlrec.lightgcn import LightGCN
 from mlrec import tracking
-from mlrec.config import ARTIFACTS_DIR
+from mlrec.config import ARTIFACTS_DIR, DATA_DIR
 from mlrec.data import load_posts, to_interactions
 from mlrec.evaluate import summarize
 from mlrec.split import make_task
@@ -34,6 +38,15 @@ WINDOWS = {
     "test": {"train": [("2018-07-01", "2018-10-01"), ("2018-10-01", "2019-01-01")],
              "eval": ("2019-01-01", "2019-05-01")},
 }
+# --affinity=add|replace (see affinity.py and notebook 04); without it the script trains the final R7 model
+AFFINITY = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--affinity=")), "off")
+NO_NICHE = "--no-niche" in sys.argv
+sys.argv = [a for a in sys.argv if not a.startswith("--")]
+assert AFFINITY in ("off", "add", "replace"), AFFINITY
+FEATS = F.FEATURES + (["partner_affinity"] if AFFINITY != "off" else [])
+if NO_NICHE:
+    FEATS = [f for f in FEATS if f not in ("niche_cosine", "same_niche")]
+BIO = A.load_bio_niches(DATA_DIR) if AFFINITY != "off" else None
 NEG_PER_BRAND = int(sys.argv[2]) if len(sys.argv) > 2 else 300
 SVD_TOP = 300   # extra candidates per brand from SVD embeddings
 KNN_TOP = 500   # candidates per brand from brand kNN
@@ -44,6 +57,7 @@ LGCN = dict(dim=128, layers=2, epochs=30, batch=32768, lr=1e-2, half_life_days=N
 EXP_ID = sys.argv[3] if len(sys.argv) > 3 else None
 CANDIDATE_RECALL = {}
 mode = sys.argv[1] if len(sys.argv) > 1 else "val"
+TAG = mode + ("" if AFFINITY == "off" else f"_affinity-{AFFINITY}") + ("_no-niche" if NO_NICHE else "")  # never overwrite R7
 
 
 def log(msg, t0=[time.time()]):
@@ -67,14 +81,23 @@ def prepare(window, train: bool, chunk: int = 500):
     svd = C.SVDEmbeddings(SVD_DIMS).fit(task, idx)
     lgcn = LightGCN(verbose=False, **LGCN).fit(task, idx)
     log(f"{window}: LightGCN trained")
-    fb = F.FeatureBuilder(task, posts, creators, brands, niches, svd, idx, lgcn=lgcn)
+    affinity = None
+    if AFFINITY != "off":
+        mix = A.creator_mix(posts[posts.ts < task.cutoff], BIO)
+        aff = A.brand_affinity(task, mix)
+        ranked = A.ranked_creators(task, mix)
+        affinity = (aff, mix)
+    fb = F.FeatureBuilder(task, posts, creators, brands, niches, svd, idx, lgcn=lgcn, affinity=affinity)
     knn = B.BrandKNN().fit(task, idx)
     kept, n_cand, n_hit = [], 0, 0
     for start in range(0, len(eval_brands), chunk):
         names = eval_brands[start:start + chunk]
-        pool = pd.concat([C.niche_pool(task, names, *niches, per_niche=NICHE_TOP),
-                          svd.top_pairs(idx, names, SVD_TOP),
-                          lgcn.top_pairs(idx, names, LGCN_TOP)])
+        sources = [svd.top_pairs(idx, names, SVD_TOP), lgcn.top_pairs(idx, names, LGCN_TOP)]
+        if AFFINITY != "replace" and not NO_NICHE:
+            sources.append(C.niche_pool(task, names, *niches, per_niche=NICHE_TOP))
+        if AFFINITY != "off":
+            sources.append(A.affinity_pool(names, aff, ranked, slots=NICHE_TOP))
+        pool = pd.concat(sources)
         cand = C.generate(task, idx, names, knn_top=KNN_TOP, extra=pool, knn=knn)
         df = F.add_labels(fb.transform(cand), task)
         n_cand += len(df); n_hit += int(df.label.sum())
@@ -93,12 +116,12 @@ for w in WINDOWS[mode]["train"]:
     train_parts.append(df_w.assign(brand=df_w.brand + "@" + w[0]))
     del df_w
 train_df = pd.concat(train_parts).sort_values("brand").reset_index(drop=True)
-KEEP_EVAL = ["brand", "creator_id", "label"] + F.FEATURES   # features kept to compare simple heuristics
+KEEP_EVAL = ["brand", "creator_id", "label"] + FEATS   # features kept to compare simple heuristics
 eval_task, eval_df = prepare(WINDOWS[mode]["eval"], train=False)
 
-model = R.train(train_df)
+model = R.train(train_df, features=FEATS)
 log("ranker trained")
-eval_df["ranker"] = model.predict(eval_df[F.FEATURES])
+eval_df["ranker"] = model.predict(eval_df[FEATS])
 
 # Baselines re-scored on the same candidate table, for an apples-to-apples comparison
 eval_df["organic only"] = (eval_df.org_mentions_90d * 1e3 + eval_df.org_mentions * 10
@@ -118,13 +141,13 @@ bias = pd.concat({n: d.assign(size=d.brand.map(bsize)).groupby("size", observed=
                   for n, d in per_brand.items()}, axis=1)
 print("\nMedian followers of top-10 recommendations, by brand size:\n", bias.round(0).to_string())
 
-imp = pd.Series(model.booster_.feature_importance("gain"), index=F.FEATURES).sort_values(ascending=False)
+imp = pd.Series(model.booster_.feature_importance("gain"), index=FEATS).sort_values(ascending=False)
 print("\nFeature importance (gain, share):\n", (imp / imp.sum()).round(3).to_string())
 
 ARTIFACTS_DIR.mkdir(exist_ok=True)
-model.booster_.save_model(str(ARTIFACTS_DIR / f"ranker_{mode}.txt"))
-(imp / imp.sum()).rename("gain_share").to_csv(ARTIFACTS_DIR / f"feature_importance_{mode}.csv")
-(ARTIFACTS_DIR / f"ranker_{mode}.json").write_text(json.dumps({
+model.booster_.save_model(str(ARTIFACTS_DIR / f"ranker_{TAG}.txt"))
+(imp / imp.sum()).rename("gain_share").to_csv(ARTIFACTS_DIR / f"feature_importance_{TAG}.csv")
+(ARTIFACTS_DIR / f"ranker_{TAG}.json").write_text(json.dumps({
     "summary": summary.to_dict(orient="index"),
     "recall50_by_bucket": by_bucket.to_dict(),
     "feature_importance": (imp / imp.sum()).to_dict(),
@@ -135,14 +158,14 @@ log("saved")
 params = {
     "mode": mode, "train_windows": WINDOWS[mode]["train"], "eval_window": WINDOWS[mode]["eval"],
     "neg_per_brand": NEG_PER_BRAND, "knn_top": KNN_TOP, "svd_top": SVD_TOP, "niche_top": NICHE_TOP,
-    "svd_dims": SVD_DIMS, "lgcn_top": LGCN_TOP, **{f"lgcn_{k}": v for k, v in LGCN.items()}, "n_features": len(F.FEATURES), "features": ",".join(F.FEATURES),
+    "svd_dims": SVD_DIMS, "lgcn_top": LGCN_TOP, **{f"lgcn_{k}": v for k, v in LGCN.items()}, "n_features": len(FEATS), "features": ",".join(FEATS), "affinity": AFFINITY, "no_niche": NO_NICHE,
     **{f"lgbm_{k}": v for k, v in model.get_params().items()
        if k in ("n_estimators", "learning_rate", "num_leaves", "min_child_samples", "subsample", "colsample_bytree")},
 }
-with tracking.run(f"ranker {mode}", exp_id=EXP_ID, params=params):
+with tracking.run(f"ranker {TAG}", exp_id=EXP_ID, params=params):
     tracking.log_summary(summary, by_bucket)
     tracking.log_metrics({f"candidate_recall {k}": v for k, v in CANDIDATE_RECALL.items()})
     tracking.log_metrics({f"top10 followers {s}": v for s, v in bias["ranker"].items()}, prefix="ranker/")
-    for f in [f"ranker_{mode}.txt", f"ranker_{mode}.json", f"feature_importance_{mode}.csv"]:
+    for f in [f"ranker_{TAG}.txt", f"ranker_{TAG}.json", f"feature_importance_{TAG}.csv"]:
         tracking.mlflow.log_artifact(str(ARTIFACTS_DIR / f))
 log("logged to MLflow")

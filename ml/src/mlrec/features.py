@@ -85,9 +85,10 @@ class FeatureBuilder:
     Working in chunks keeps memory bounded: millions of candidate rows never exist at the same time."""
 
     def __init__(self, task: Task, posts: pd.DataFrame, creators: pd.DataFrame, brands: pd.DataFrame,
-                 niches: tuple, svd, idx, lgcn=None):
+                 niches: tuple, svd, idx, lgcn=None, affinity: tuple | None = None):
         posts_hist = posts[posts.ts < task.cutoff]
         self.task, self.svd, self.idx, self.lgcn = task, svd, idx, lgcn
+        self.affinity = affinity        # optional (brand affinity, creator niche mix), see affinity.py
         self.organic = _pair_organic(task).set_index(["brand", "creator_id"])
         self.creator_stats = _creator_stats(task, posts_hist, creators)
         self.brand_stats = _brand_stats(task, brands).join(_brand_partner_size(task, creators))
@@ -119,6 +120,10 @@ class FeatureBuilder:
         df["same_niche"] = np.nan
         df.loc[have, "same_niche"] = (cw.argmax(axis=1) == bw.argmax(axis=1)).astype(float)
         df[FEATURES] = df[FEATURES].astype("float32")
+        if self.affinity is not None:
+            from .affinity import pair_affinity
+            aff, mix = self.affinity
+            df["partner_affinity"] = pair_affinity(aff, mix, df.brand, df.creator_id)
         return df
 
 

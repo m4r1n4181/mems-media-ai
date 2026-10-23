@@ -22,14 +22,14 @@ def sample_training_groups(df: pd.DataFrame, neg_per_brand: int = 100, seed: int
     return pd.concat([pos, neg]).sort_values("brand").reset_index(drop=True)
 
 
-def train(train_df: pd.DataFrame, seed: int = 0) -> lgb.LGBMRanker:
+def train(train_df: pd.DataFrame, seed: int = 0, features: list[str] = FEATURES) -> lgb.LGBMRanker:
     groups = train_df.groupby("brand", sort=False).size().values
     model = lgb.LGBMRanker(
         objective="lambdarank", n_estimators=400, learning_rate=0.05, num_leaves=31,
         min_child_samples=50, subsample=0.8, subsample_freq=1, colsample_bytree=0.8,
         lambdarank_truncation_level=50, random_state=seed, verbose=-1,
     )
-    model.fit(train_df[FEATURES], train_df.label, group=groups)
+    model.fit(train_df[features], train_df.label, group=groups)
     return model
 
 

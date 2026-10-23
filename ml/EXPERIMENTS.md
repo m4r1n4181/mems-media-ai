@@ -22,12 +22,28 @@ The test window (2019-01-01 → 2019-04-30) has **not** been used yet.
 | R6 | + partner-profile features (niche centroid of paid partners, creator kNN, engagement/experience gaps) | 0.424 | 0.137 | 0.229 | 0.281 | 0.125 | no — no gain, information already in kNN/SVD |
 | **R7** | **R5 + LightGCN candidates (top-300) and LightGCN features** | **0.476** | **0.146** | **0.260** | **0.322** | **0.135** | **current** |
 | R8 | R7 + time-decayed LightGCN (B7) + audience-quality features (comments/likes, followers/followees) | 0.481 | 0.144 | 0.257 | 0.323 | 0.135 | no — no gain over R7 |
+| R9 | R7 + niche-affinity pool (creator niche mix from hashtags + bios, brand affinity learned from paid partners) + `partner_affinity` feature | 0.486 | 0.144 | 0.259 | 0.322 | 0.134 | no — no gain over R7 |
+| A2 | ablation: R7 without the niche pool and without niche features (`--no-niche`) | 0.448 | 0.145 | 0.254 | 0.319 | 0.134 | no — same ranking with 18% fewer candidates; R7 kept (already tested) |
 
 ## Notes
 
 - **R8 lesson:** time decay made LightGCN alone much better (B6 → B7, Recall@50 0.179 → 0.203), yet the ranker did
   not improve. The ranker already knew about recency from `days_since_org_mention`, so a better component does not
   automatically mean a better system. Audience-quality proxies got ~1% importance each: no demographic signal here.
+
+- **R9 lesson (follow-up to the error analysis, notebook 04):** most missed partners are in another niche than the
+  brand, so creators got a niche *mix* (bios fill in creators who use few hashtags: coverage of new partners
+  52% → 80%) and brands an *affinity* learned from the creators they paid. Candidate recall on validation:
+  adding the affinity pool +1.0 point (hashtags) / +1.1 (with bios) for ~90 extra candidates per brand; replacing
+  the old niche pool with it −1.2. In the ranker the new feature got 1.7% of the gain, but Recall@50 stayed at
+  R7's level. Probably the partners it adds are hard cases the ranker does not lift into its top 50, and the niche
+  signal was already partly in `niche_cosine`, kNN and LightGCN. Not adopted; the code stays behind `--affinity` for reproducibility.
+
+- **A2 lesson (ablation):** removing niches entirely costs 2.7 points of candidate recall but nothing measurable in
+  Recall@50 (0.2540 vs R7's 0.2553 in the same run setup). Niches help people (filters, explanations in the app),
+  not ranking: the graph signals already carry that information. A niche is a coarse filter: each niche holds
+  1,300–6,900 experienced creators, missed partners sit around position 1,300 in their niche list, and about half
+  of them are on no niche list at all. R7 stays final because it is the model evaluated on the test window.
 
 - **Noise level:** re-running R5 gave Recall@50 0.2301 vs 0.2298 (negative sampling only). With LightGCN the
   runs vary more: R7 on validation gave 0.2596 and, re-run inside walk-forward, 0.2553. Treat differences

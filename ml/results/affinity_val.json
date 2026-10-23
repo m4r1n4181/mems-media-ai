@@ -1,0 +1,22 @@
+{
+  "current": {
+    "candidate_recall": 0.47522996785991356,
+    "candidates_per_brand": 1115.6419791026428
+  },
+  "+ affinity (hashtags)": {
+    "candidate_recall": 0.4847611659093428,
+    "candidates_per_brand": 1208.927934849416
+  },
+  "+ affinity (hashtags + bio)": {
+    "candidate_recall": 0.4857216742399054,
+    "candidates_per_brand": 1203.4124154886294
+  },
+  "affinity instead of niche pool": {
+    "candidate_recall": 0.46337138424027485,
+    "candidates_per_brand": 1022.0044560540873
+  },
+  "coverage": {
+    "new partners whose creator has a niche mix (hashtags)": 0.5246961468838893,
+    "new partners whose creator has a niche mix (hashtags + bio)": 0.7976652259041708
+  }
+}
