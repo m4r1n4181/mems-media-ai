@@ -1,0 +1,58 @@
+{
+  "summary": {
+    "popularity (all time)": {
+      "recall@10": 0.0038,
+      "recall@50": 0.0108,
+      "recall@100": 0.0202,
+      "ndcg@50": 0.0048,
+      "top10_median_followers": 21842.4146
+    },
+    "popularity (last 180d)": {
+      "recall@10": 0.0051,
+      "recall@50": 0.0174,
+      "recall@100": 0.0328,
+      "ndcg@50": 0.0069,
+      "top10_median_followers": 19473.665
+    },
+    "organic mentions": {
+      "recall@10": 0.118,
+      "recall@50": 0.1629,
+      "recall@100": 0.1818,
+      "ndcg@50": 0.0986,
+      "top10_median_followers": 27456.6805
+    },
+    "brand kNN": {
+      "recall@10": 0.0707,
+      "recall@50": 0.1383,
+      "recall@100": 0.1829,
+      "ndcg@50": 0.0691,
+      "top10_median_followers": 38006.9375
+    }
+  },
+  "recall50_by_bucket": {
+    "popularity (all time)": {
+      "cold (0)": 0.0,
+      "1-9": 0.0091,
+      "10-99": 0.0115,
+      "100+": 0.0111
+    },
+    "popularity (last 180d)": {
+      "cold (0)": 0.0046,
+      "1-9": 0.0182,
+      "10-99": 0.0171,
+      "100+": 0.018
+    },
+    "organic mentions": {
+      "cold (0)": 0.0046,
+      "1-9": 0.1622,
+      "10-99": 0.1721,
+      "100+": 0.1249
+    },
+    "brand kNN": {
+      "cold (0)": 0.0046,
+      "1-9": 0.1753,
+      "10-99": 0.1355,
+      "100+": 0.0745
+    }
+  }
+}

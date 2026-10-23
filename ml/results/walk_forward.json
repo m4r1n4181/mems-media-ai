@@ -1,0 +1,59 @@
+{
+  "per_fold": [
+    {
+      "fold": "fold1",
+      "model": "organic only",
+      "recall@10": 0.132,
+      "recall@50": 0.1869,
+      "recall@100": 0.2165,
+      "ndcg@50": 0.1144,
+      "top10_median_followers": 30180.4706
+    },
+    {
+      "fold": "fold1",
+      "model": "kNN only",
+      "recall@10": 0.0554,
+      "recall@50": 0.102,
+      "recall@100": 0.1319,
+      "ndcg@50": 0.0532,
+      "top10_median_followers": 33375.4753
+    },
+    {
+      "fold": "fold1",
+      "model": "ranker",
+      "recall@10": 0.1387,
+      "recall@50": 0.2259,
+      "recall@100": 0.2783,
+      "ndcg@50": 0.1278,
+      "top10_median_followers": 39807.8392
+    },
+    {
+      "fold": "val",
+      "model": "organic only",
+      "recall@10": 0.1278,
+      "recall@50": 0.2068,
+      "recall@100": 0.2472,
+      "ndcg@50": 0.1125,
+      "top10_median_followers": 32837.8211
+    },
+    {
+      "fold": "val",
+      "model": "kNN only",
+      "recall@10": 0.0707,
+      "recall@50": 0.1383,
+      "recall@100": 0.1829,
+      "ndcg@50": 0.0691,
+      "top10_median_followers": 38007.2172
+    },
+    {
+      "fold": "val",
+      "model": "ranker",
+      "recall@10": 0.1447,
+      "recall@50": 0.2553,
+      "recall@100": 0.3212,
+      "ndcg@50": 0.1348,
+      "top10_median_followers": 44671.4454
+    }
+  ],
+  "ranker_beats_heuristic_every_fold": true
+}
