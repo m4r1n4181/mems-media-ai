@@ -24,7 +24,9 @@ const Layout = ({ children }: LayoutProps) => {
 
         {/* Scrollable main content */}
         <main className="flex-1 overflow-y-auto p-4">
-          <div className="bg-neutral-900/40 backdrop-blur-sm border border-neutral-800 rounded-2xl p-6 h-full shadow-xl">
+          {/* No backdrop-blur here: backdrop-filter makes this box the containing block for position:fixed,
+              so every page's modals were placed relative to the scrolled content instead of the screen. */}
+          <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-6 h-full shadow-xl">
             {children}
           </div>
         </main>

@@ -20,7 +20,7 @@ The gain is consistent across walk-forward folds (+21% and +23% Recall@50) — s
 
 ```
 brand ─► candidate generation (~1,100 per brand)          ─► LightGBM LambdaRank ─► ranked creators
-           organic mentions · brand kNN · niche pool          26 features: recency of mentions, graph scores,
+           organic mentions · brand kNN · niche pool          25 features: recency of mentions, graph scores,
            SVD embeddings · LightGCN graph embeddings          niche fit, creator size & experience, brand profile
 ```
 
@@ -36,12 +36,13 @@ brand ─► candidate generation (~1,100 per brand)          ─► LightGBM La
 | [01_data_exploration](notebooks/01_data_exploration.ipynb) | what the data contains, why likes must be normalised, why the sponsored label is circular, the brand–creator graph, niches learned from hashtags |
 | [02_baselines](notebooks/02_baselines.ipynb) | the recommendation task, temporal split, metrics, four baselines |
 | [03_ranker](notebooks/03_ranker.ipynb) | candidate ceiling, experiment path, walk-forward and final test, popularity bias, limitations |
+| [04_error_analysis](notebooks/04_error_analysis.ipynb) | why half of the partners are never retrieved, a fix that did not help (R9), removing niches (A2) |
 
 Notebooks only present results; the logic lives in `src/mlrec/` so it can be tested and served.
 
 ## Data and privacy
 
-The dataset is **not** included (research-only licence). Extraction (`extract.py`, run next to the data) drops names,
+The dataset is **not** included: the authors share it for research on request. Extraction (`extract.py`, run next to the data) drops names,
 bios, e-mails, phones and URLs. Creators are pseudonymized with a salted hash; the salt stays next to the data.
 `results/` holds only aggregate metrics.
 

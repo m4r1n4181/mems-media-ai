@@ -1,0 +1,69 @@
+# MEMS: the whole app with one command.
+#
+#   docker compose up --build        then open http://localhost:5173 (register an account first)
+#
+# Services: PostgreSQL, the .NET API, the React client, the Python ml-service, and Mailpit (a fake mail server:
+# every e-mail the app sends shows up at http://localhost:8025, nothing reaches a real inbox).
+# The model data (ml-service/data, not in git) must exist before starting; see README, "Running it".
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: MEMSDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres        # local demo only
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:                         # the API migrates the database on start, so it must wait for it
+      test: ["CMD-SHELL", "pg_isready -U postgres -d MEMSDB"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  ml-service:
+    build: ./ml-service
+    volumes:
+      - ./ml-service/data:/app/data:ro
+    env_file:                            # optional: LLM provider and keys (see ml-service/.env.example)
+      - path: ./ml-service/.env
+        required: false
+    environment:
+      OLLAMA_URL: http://host.docker.internal:11434   # Ollama running on your computer, if any
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+
+  api:
+    build: ./MusicEventManagementSystem/MusicEventManagementSystem.API
+    depends_on:
+      db:
+        condition: service_healthy
+      ml-service:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development          # Swagger at http://localhost:5255/swagger
+      TZ: Europe/Sarajevo                          # campaign dates in e-mails use local time; containers default to UTC
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=MEMSDB;Username=postgres;Password=postgres
+      MlService__BaseUrl: http://ml-service:8000
+      Email__Mode: smtp
+      Email__SmtpHost: mailpit
+      Email__SmtpPort: "1025"
+    ports:
+      - "5255:5255"
+
+  client:
+    build: ./MusicEventManagementSystem/MusicEventManagementSystem.Client
+    depends_on:
+      - api
+    ports:
+      - "5173:80"                         # the API allows this origin (CORS)
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"                       # web inbox
+
+volumes:
+  db-data:

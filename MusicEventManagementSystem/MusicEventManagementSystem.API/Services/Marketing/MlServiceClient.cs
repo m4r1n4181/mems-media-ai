@@ -13,8 +13,9 @@ namespace MusicEventManagementSystem.API.Services.Marketing
     // ---- shapes returned by ml-service (snake_case JSON) ----
     public record MlReason(string Code, string? Text);
     public record MlCreator(string CreatorId, int Followers, string? SizeTier, string? Niche, int PaidBrandsTotal,
-                            int PaidBrands180d, double? MedianRelEngagement, int PostsInData, string? LastPost,
-                            List<string>? RecentBrands);
+                            // explicit: the snake_case policy would turn "PaidBrands180d" into "paid_brands180d"
+                            [property: JsonPropertyName("paid_brands_180d")] int PaidBrands180d,
+                            double? MedianRelEngagement, int PostsInData, string? LastPost, List<string>? RecentBrands);
     public record MlRecommendation(string CreatorId, int Rank, double Score, List<JsonElement> Reasons, MlCreator Creator);
     public record MlRecommendations(string Brand, string ModelVersion, string AsOf, List<MlRecommendation> Items);
     public record MlBrand(string Brand, bool IsClient, int Followers, string? Niche, int CreatorsMentioning,

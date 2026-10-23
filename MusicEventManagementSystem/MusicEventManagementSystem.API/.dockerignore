@@ -1,0 +1,6 @@
+bin/
+obj/
+sent-emails/
+# local secrets (connection string with password) never go into an image
+appsettings.Development.json
+*.user

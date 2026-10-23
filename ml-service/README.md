@@ -35,7 +35,7 @@ Only positions are used, so lists with differently scaled scores combine fairly.
 
 How good is that? `ml/scripts/cold_start_simulation.py` pretends every validation brand is new and measures
 Recall@50 against its real new partners: the brand's own model ranking 0.255; look-alikes chosen by shared
-creators 0.049 (0.054 with five brands and the niche list); look-alikes chosen by niche and size 0.021, raised to
+creators 0.049 (0.054 with the niche list fused in); look-alikes chosen by niche and size 0.021, raised to
 0.030 by fusing the niche list; random look-alikes 0.007. Suggestions for a new brand are a starting point, about
 a fifth as good as for a known brand, and the app says so. Once the brand runs campaigns it becomes a normal brand
 at the next model export.
