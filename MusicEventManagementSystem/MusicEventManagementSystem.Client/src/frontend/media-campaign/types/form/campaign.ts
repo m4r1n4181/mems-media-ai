@@ -1,6 +1,7 @@
 export interface CreateCampaignForm {
-  eventId: number;
+  brandId: number;
   name: string;
+  brief?: string;
   startDate: string; // ISO date string
   endDate: string; // ISO date string
   totalBudget: number;
@@ -8,8 +9,9 @@ export interface CreateCampaignForm {
 }
 
 export interface UpdateCampaignForm {
-  eventId?: number;
+  brandId?: number;
   name?: string;
+  brief?: string;
   startDate?: string; // ISO date string
   endDate?: string; // ISO date string
   totalBudget?: number;

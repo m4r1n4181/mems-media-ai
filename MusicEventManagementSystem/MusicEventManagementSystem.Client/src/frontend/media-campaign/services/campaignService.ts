@@ -111,17 +111,17 @@ export class CampaignService {
     }
   }
 
-  // GET: api/Campaign/eventId/{eventId}
-  static async getByEventId(eventId: number): Promise<Campaign[]> {
+  // GET: api/Campaign/brandId/{brandId}
+  static async getByBrandId(brandId: number): Promise<Campaign[]> {
     try {
-      const response = await fetch(`${this.BASE_URL}/eventId/${eventId}`);
+      const response = await fetch(`${this.BASE_URL}/brandId/${brandId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('Error fetching campaigns by event ID:', error);
-      throw new Error('Failed to fetch campaigns by event ID');
+      console.error('Error fetching campaigns by brand ID:', error);
+      throw new Error('Failed to fetch campaigns by brand ID');
     }
   }
 

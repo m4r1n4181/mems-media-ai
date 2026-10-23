@@ -8,13 +8,16 @@ import {
   X, 
   Calendar,
   DollarSign,
-  ChevronDown
+  ChevronDown,
+  Users,
+  Tag
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { CampaignService } from '../services/campaignService';
 import type { Campaign } from '../types/api/campaign';
 import type { CreateCampaignForm, UpdateCampaignForm } from '../types/form/campaign';
-import { EventService } from '../../event-organization/services/eventService';
-import type { EventResponse } from '../../event-organization/types/api/event';
+import { BrandService } from '../services/brandService';
+import type { Brand } from '../types/api/marketing';
 
 const Campaigns = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -24,10 +27,12 @@ const Campaigns = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [events, setEvents] = useState<EventResponse[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const navigate = useNavigate();
   const [createForm, setCreateForm] = useState<CreateCampaignForm>({
-    eventId: 1,
+    brandId: 0,
     name: '',
+    brief: '',
     startDate: '',
     endDate: '',
     totalBudget: 0,
@@ -35,19 +40,19 @@ const Campaigns = () => {
   });
   const [editForm, setEditForm] = useState<UpdateCampaignForm>({});
 
-  // Only one useEffect for fetching campaigns and events
+  // Only one useEffect for fetching campaigns and brands
   useEffect(() => {
     fetchCampaigns();
-    fetchEvents();
+    fetchBrands();
   }, []);
 
-  const fetchEvents = async () => {
+  const fetchBrands = async () => {
     try {
-      const data = await EventService.getAllEvents();
-      setEvents(data);
+      const data = await BrandService.getAllBrands();
+      setBrands(data);
     } catch (error) {
-      console.error('Error fetching events:', error);
-      alert('Error loading events. Please try again.');
+      console.error('Error fetching brands:', error);
+      alert('Error loading brands. Please try again.');
     }
   };
 
@@ -65,7 +70,7 @@ const Campaigns = () => {
 
   const handleCreateCampaign = async () => {
     try {
-      if (!createForm.name || !createForm.startDate || !createForm.endDate || !createForm.eventId) {
+      if (!createForm.name || !createForm.startDate || !createForm.endDate || !createForm.brandId) {
         alert('Please fill in all required fields.');
         return;
       }
@@ -73,8 +78,9 @@ const Campaigns = () => {
       setCampaigns(prev => [...prev, newCampaign]);
       setShowCreateModal(false);
       setCreateForm({
-        eventId: 1,
+        brandId: 0,
         name: '',
+        brief: '',
         startDate: '',
         endDate: '',
         totalBudget: 0,
@@ -107,8 +113,9 @@ const Campaigns = () => {
   const handleEditCampaign = (campaign: Campaign) => {
     setSelectedCampaign(campaign);
     setEditForm({
-      eventId: campaign.eventId,
+      brandId: campaign.brandId ?? undefined,
       name: campaign.name,
+      brief: campaign.brief ?? '',
       startDate: campaign.startDate,
       endDate: campaign.endDate,
       totalBudget: campaign.totalBudget,
@@ -120,7 +127,7 @@ const Campaigns = () => {
   const handleUpdateCampaign = async () => {
     if (!selectedCampaign) return;
     try {
-      if (!editForm.name || !editForm.startDate || !editForm.endDate || !editForm.eventId) {
+      if (!editForm.name || !editForm.startDate || !editForm.endDate || !editForm.brandId) {
         alert('Please fill in all required fields.');
         return;
       }
@@ -244,11 +251,25 @@ const Campaigns = () => {
                           <span className="flex items-center gap-1">
                             📊 {campaign.adIds?.length || 0} Ads
                           </span>
+                          {campaign.brandHandle && (
+                            <span className="flex items-center gap-1">
+                              <Tag className="w-4 h-4" />
+                              @{campaign.brandHandle}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigate(`/media-campaign/campaigns/${campaign.campaignId}/influencers`)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-purple-300 hover:text-white bg-purple-400/10 hover:bg-purple-500 rounded-lg transition-all duration-200"
+                        title="Find and contact influencers for this campaign"
+                      >
+                        <Users className="w-4 h-4" />
+                        Influencers
+                      </button>
                       <button 
                         onClick={() => handleViewCampaign(campaign)}
                         className="p-2 text-neutral-400 hover:text-blue-400 hover:bg-blue-400/20 rounded-lg transition-all duration-200"
@@ -318,20 +339,33 @@ const Campaigns = () => {
                 />
               </div>
 
+              {/* Brief: what the campaign is about; used when AI writes outreach e-mails */}
+              <div>
+                <label className="block text-sm text-neutral-300 mb-2">Brief</label>
+                <textarea
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="What should creators know about this campaign?"
+                  value={createForm.brief || ''}
+                  onChange={(e) => setCreateForm({...createForm, brief: e.target.value})}
+                  className="w-full p-3 bg-neutral-700 border border-neutral-600 rounded-xl text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                {/* Event */}
+                {/* Brand */}
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-2">Event</label>
+                  <label className="block text-sm text-neutral-300 mb-2">Brand *</label>
                   <div className="relative">
                     <select
-                      value={createForm.eventId}
-                      onChange={(e) => setCreateForm({...createForm, eventId: Number(e.target.value)})}
+                      value={createForm.brandId || ''}
+                      onChange={(e) => setCreateForm({...createForm, brandId: Number(e.target.value)})}
                       className="w-full p-3 bg-neutral-700 border border-neutral-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent appearance-none cursor-pointer"
                     >
-                      <option value="">Select event</option>
-                      {events.map(event => (
-                        <option key={event.id} value={event.id}>
-                          {event.name}
+                      <option value="">Select brand</option>
+                      {brands.map(brand => (
+                        <option key={brand.brandId} value={brand.brandId}>
+                          @{brand.handle}
                         </option>
                       ))}
                     </select>
@@ -390,7 +424,7 @@ const Campaigns = () => {
               <button
                 onClick={handleCreateCampaign}
                 className="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl transition-colors font-medium"
-                disabled={!createForm.name || !createForm.startDate || !createForm.endDate || !createForm.eventId}
+                disabled={!createForm.name || !createForm.startDate || !createForm.endDate || !createForm.brandId}
               >
                 Save Campaign
               </button>
@@ -420,12 +454,21 @@ const Campaigns = () => {
                   <p className="text-white font-medium">{selectedCampaign.name}</p>
                 </div>
               </div>
+
+              {selectedCampaign.brief && (
+                <div>
+                  <label className="block text-sm text-neutral-300 mb-2">Brief</label>
+                  <div className="p-3 bg-neutral-700/50 border border-neutral-600 rounded-xl">
+                    <p className="text-neutral-200 text-sm whitespace-pre-line">{selectedCampaign.brief}</p>
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-2">Event ID</label>
+                  <label className="block text-sm text-neutral-300 mb-2">Brand</label>
                   <div className="p-3 bg-neutral-700/50 border border-neutral-600 rounded-xl">
-                    <p className="text-white">{selectedCampaign.eventId}</p>
+                    <p className="text-white">{selectedCampaign.brandHandle ? `@${selectedCampaign.brandHandle}` : '—'}</p>
                   </div>
                 </div>
                 <div>
@@ -498,20 +541,33 @@ const Campaigns = () => {
                 />
               </div>
 
+              {/* Brief: what the campaign is about; used when AI writes outreach e-mails */}
+              <div>
+                <label className="block text-sm text-neutral-300 mb-2">Brief</label>
+                <textarea
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="What should creators know about this campaign?"
+                  value={editForm.brief || ''}
+                  onChange={(e) => setEditForm({...editForm, brief: e.target.value})}
+                  className="w-full p-3 bg-neutral-700 border border-neutral-600 rounded-xl text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                {/* Event */}
+                {/* Brand */}
                 <div>
-                  <label className="block text-sm text-neutral-300 mb-2">Event</label>
+                  <label className="block text-sm text-neutral-300 mb-2">Brand *</label>
                   <div className="relative">
                     <select
-                      value={editForm.eventId || ''}
-                      onChange={(e) => setEditForm({...editForm, eventId: Number(e.target.value)})}
+                      value={editForm.brandId || ''}
+                      onChange={(e) => setEditForm({...editForm, brandId: Number(e.target.value)})}
                       className="w-full p-3 bg-neutral-700 border border-neutral-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent appearance-none cursor-pointer"
                     >
-                      <option value="">Select event</option>
-                      {events.map(event => (
-                        <option key={event.id} value={event.id}>
-                          {event.name}
+                      <option value="">Select brand</option>
+                      {brands.map(brand => (
+                        <option key={brand.brandId} value={brand.brandId}>
+                          @{brand.handle}
                         </option>
                       ))}
                     </select>
@@ -570,7 +626,7 @@ const Campaigns = () => {
               <button
                 onClick={handleUpdateCampaign}
                 className="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl transition-colors font-medium"
-                disabled={!editForm.name || !editForm.startDate || !editForm.endDate || !editForm.eventId}
+                disabled={!editForm.name || !editForm.startDate || !editForm.endDate || !editForm.brandId}
               >
                 Update Campaign
               </button>
