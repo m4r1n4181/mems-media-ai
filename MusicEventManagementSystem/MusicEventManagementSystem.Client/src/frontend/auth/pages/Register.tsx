@@ -11,18 +11,16 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    department: 1,
+    department: 4,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(0);
   const navigate = useNavigate();
 
+  // The app is a marketing tool now, so everyone joins the marketing team
   const departments = [
-    { value: 1, label: 'Ticket Sales', color: 'lime', gradient: 'from-lime-400 to-green-500' },
-    { value: 2, label: 'Event Organization', color: 'pink', gradient: 'from-pink-400 to-rose-500' },
-    { value: 3, label: 'Artist Communication', color: 'sky', gradient: 'from-sky-400 to-cyan-500' },
-    { value: 4, label: 'Media Campaign', color: 'purple', gradient: 'from-purple-400 to-violet-500' },
+    { value: 4, label: 'Marketing', color: 'purple', gradient: 'from-purple-400 to-violet-500' },
   ];
 
   const getDepartmentData = (dept: number) => {

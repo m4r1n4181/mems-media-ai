@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  LogOut, CircleDollarSign, BarChart2, TrendingUp, Star, Bookmark, Clock, ChevronLeft, ChevronRight, Megaphone,
-  MapPin, Map, Ticket, Calendar, PieChart, PlaySquare, ListChecks, CalendarDays, Briefcase, Building2, Film, GitBranch, Workflow
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  LogOut, BarChart2, Bookmark, Clock, ChevronLeft, ChevronRight, Megaphone, PieChart, Film, GitBranch, Workflow, Tag
 } from "lucide-react";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const [activeItem, setActiveItem] = useState(0);
   const [userDepartment, setUserDepartment] = useState<number>(1);
   const navigate = useNavigate();
 
@@ -24,58 +22,28 @@ const Sidebar = () => {
     }
   }, []);
 
-  const getMenuItems = (department: number) => {
-    switch (department) {
-      case 1: // TicketSales
-        return [
-          { icon: <BarChart2 />, label: "Dashboard", path: "/ticket-sales/dashboard" },
-          { icon: <Building2 />, label: "Infrastructure", path: "/ticket-sales/infrastructure" },
-          { icon: <MapPin />, label: "Venues", path: "/ticket-sales/venues" },
-          { icon: <Clock />, label: "Segments", path: "/ticket-sales/segments" },
-          { icon: <Map />, label: "Zones", path: "/ticket-sales/zones" },
-          { icon: <Bookmark />, label: "Ticket Types", path: "/ticket-sales/ticket-types" },
-          { icon: <Ticket />, label: "Tickets", path: "/ticket-sales/tickets" },
-          { icon: <TrendingUp />, label: "Pricing Rules", path: "/ticket-sales/pricing-rules" },
-          { icon: <Star />, label: "Special Offers", path: "/ticket-sales/special-offers" },
-          { icon: <CircleDollarSign />, label: "Recorded Sales", path: "/ticket-sales/recorded-sales" },
-        ];
-      
-      case 2: // EventOrganization
-        return [
-          { icon: <BarChart2 />, label: "Dashboard", path: "/event-organization/dashboard" },
-          { icon: <Calendar />, label: "Events", path: "/event-organization/events" },
-          { icon: <PlaySquare />, label: "Performances", path: "/event-organization/performances" },
-          { icon: <ListChecks />, label: "Work Tasks", path: "/event-organization/work-tasks" },
-          { icon: <CalendarDays />, label: "Calendar", path: "/event-organization/calendar" },
-          { icon: <Briefcase />, label: "Resources", path: "/event-organization/resources" },
-          { icon: <PieChart />, label: "Analytics", path: "/event-organization/analytics" },
-        ];
-      
-      case 3: // ArtistCommunication
-        return [
-          { icon: <BarChart2 />, label: "Dashboard", path: "/artist-communication/dashboard" },
-        ];
-      
-      case 4: // MediaCampaign
-        return [
-          { icon: <BarChart2 />, label: "Dashboard", path: "/media-campaign/dashboard" },
-          { icon: <Megaphone />, label: "Campaigns", path: "/media-campaign/campaigns" },
-          { icon: <Film />, label: "Ads", path: "/media-campaign/ads" },
-          { icon: <Bookmark />, label: "Ad Types", path: "/media-campaign/adtypes" },
-          { icon: <Workflow />, label: "Workflows", path: "/media-campaign/workflows" },
-          { icon: <PieChart />, label: "Analytics", path: "/media-campaign/analytics" },
-          { icon: <GitBranch />, label: "Integrations", path: "/media-campaign/integrations" },
-          { icon: <Clock />, label: "My Tasks", path: "/media-campaign/mytasks" },
-        ];
-      
-      default:
-        return [
-          { icon: <BarChart2 />, label: "Dashboard", path: "/dashboard" },
-        ];
-    }
-  };
+  // The app is a marketing tool now: every user gets the marketing menu
+  // (ticket sales, event and artist modules are no longer part of the product).
+  const getMenuItems = (_department: number) => [
+    { icon: <BarChart2 />, label: "Dashboard", path: "/media-campaign/dashboard" },
+    { icon: <Megaphone />, label: "Campaigns", path: "/media-campaign/campaigns" },
+    { icon: <Tag />, label: "Brands", path: "/media-campaign/brands" },
+    { icon: <Film />, label: "Ads", path: "/media-campaign/ads" },
+    { icon: <Bookmark />, label: "Ad Types", path: "/media-campaign/adtypes" },
+    { icon: <Workflow />, label: "Workflows", path: "/media-campaign/workflows" },
+    { icon: <PieChart />, label: "Analytics", path: "/media-campaign/analytics" },
+    { icon: <GitBranch />, label: "Integrations", path: "/media-campaign/integrations" },
+    { icon: <Clock />, label: "My Tasks", path: "/media-campaign/mytasks" },
+  ];
 
   const menuItems = getMenuItems(userDepartment);
+
+  // Highlight the item that matches the current URL (also for sub-pages such as
+  // /media-campaign/campaigns/5/influencers), so the highlight survives page loads.
+  const { pathname } = useLocation();
+  const activeItem = menuItems.findIndex(
+    (item) => pathname === item.path || pathname.startsWith(item.path + "/")
+  );
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -147,7 +115,6 @@ const Sidebar = () => {
             <button
               key={index}
               onClick={() => {
-                setActiveItem(index);
                 navigate(item.path);
               }}
               className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 w-full group ${
