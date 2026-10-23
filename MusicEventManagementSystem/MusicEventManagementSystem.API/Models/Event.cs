@@ -21,7 +21,6 @@ namespace MusicEventManagementSystem.API.Models
 
         // Navigation property - Event - (1,N) -> PricingRule
         public ICollection<PricingRule> PricingRules { get; set; } = new List<PricingRule>();
-        public ICollection<Campaign> Campaigns { get; set; } = new List<Campaign>(); 
     }
 
 }

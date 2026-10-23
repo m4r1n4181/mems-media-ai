@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Outreach e-mails written in "pickup" mode during development
+sent-emails/

@@ -12,7 +12,8 @@ namespace MusicEventManagementSystem.API.Repositories
         public override async Task<IEnumerable<Campaign>> GetAllAsync()
         {
             return await _context.Campaigns
-                .Include(c => c.Ads) 
+                .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .ToListAsync();
         }
 
@@ -20,14 +21,16 @@ namespace MusicEventManagementSystem.API.Repositories
         {
             return await _context.Campaigns
                 .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .FirstOrDefaultAsync(c => c.CampaignId == id);
         }
 
-        public async Task<IEnumerable<Campaign>> GetByEventIdAsync(int eventId)
+        public async Task<IEnumerable<Campaign>> GetByBrandIdAsync(int brandId)
         {
             return await _context.Campaigns
-                .Where(c => c.EventId == eventId)
+                .Where(c => c.BrandId == brandId)
                 .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .ToListAsync();
         }
 
@@ -36,6 +39,7 @@ namespace MusicEventManagementSystem.API.Repositories
             return await _context.Campaigns
                 .Where(c => c.Name == name)
                 .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .ToListAsync();
         }
 
@@ -44,6 +48,7 @@ namespace MusicEventManagementSystem.API.Repositories
             return await _context.Campaigns
                 .Where(c => c.StartDate == startDate)
                 .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .ToListAsync();
         }
 
@@ -52,6 +57,7 @@ namespace MusicEventManagementSystem.API.Repositories
             return await _context.Campaigns
                 .Where(c => c.EndDate == endDate)
                 .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .ToListAsync();
         }
 
@@ -60,6 +66,7 @@ namespace MusicEventManagementSystem.API.Repositories
             return await _context.Campaigns
                 .Where(c => c.TotalBudget == totalBudget)
                 .Include(c => c.Ads)
+                .Include(c => c.Brand)
                 .ToListAsync();
         }
     }

@@ -33,6 +33,12 @@ namespace MusicEventManagementSystem.Data
         public DbSet<IntegrationStatus> IntegrationStatuses { get; set; }
         public DbSet<Approval> Approvals { get; set; }
 
+        // DbSets for influencer marketing (brands as clients, recommended creators, outreach)
+        public DbSet<Brand> Brands { get; set; }
+        public DbSet<Creator> Creators { get; set; }
+        public DbSet<CampaignCreator> CampaignCreators { get; set; }
+        public DbSet<OutreachEmail> OutreachEmails { get; set; }
+
         // DbSets for Performer Subsystem
         public DbSet<Performer> Performers { get; set; }
         public DbSet<Requirement> Requirements { get; set; }
@@ -213,10 +219,32 @@ namespace MusicEventManagementSystem.Data
                 .IsRequired();
                 
             builder.Entity<Campaign>()
-                .HasOne(c => c.Event)
-                .WithMany(e => e.Campaigns)
-                .HasForeignKey(c => c.EventId)
+                .HasOne(c => c.Brand)
+                .WithMany(b => b.Campaigns)
+                .HasForeignKey(c => c.BrandId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Influencer marketing
+            builder.Entity<Brand>().HasIndex(b => b.Handle).IsUnique();
+            builder.Entity<Brand>().Property(b => b.Handle).HasMaxLength(100).IsRequired();
+            builder.Entity<Brand>().Property(b => b.DisplayName).HasMaxLength(200).IsRequired();
+
+            builder.Entity<Creator>().HasKey(c => c.CreatorId);
+            builder.Entity<Creator>().Property(c => c.CreatorId).HasMaxLength(40);
+
+            builder.Entity<CampaignCreator>()
+                .HasIndex(cc => new { cc.CampaignId, cc.CreatorId }).IsUnique();
+            builder.Entity<CampaignCreator>()
+                .HasOne(cc => cc.Campaign).WithMany(c => c.Influencers)
+                .HasForeignKey(cc => cc.CampaignId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<CampaignCreator>()
+                .HasOne(cc => cc.Creator).WithMany(c => c.Campaigns)
+                .HasForeignKey(cc => cc.CreatorId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<CampaignCreator>().Property(cc => cc.Status).HasConversion<string>().HasMaxLength(20);
+
+            builder.Entity<OutreachEmail>()
+                .HasOne(e => e.CampaignCreator).WithMany(cc => cc.Emails)
+                .HasForeignKey(e => e.CampaignCreatorId).OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Campaign>()
                 .HasMany(c => c.Ads)

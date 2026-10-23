@@ -4,7 +4,7 @@ namespace MusicEventManagementSystem.API.Repositories.IRepositories
 {
     public interface ICampaignRepository : IRepository<Campaign>
     {
-        Task<IEnumerable<Campaign>> GetByEventIdAsync(int eventId);
+        Task<IEnumerable<Campaign>> GetByBrandIdAsync(int brandId);
         Task<IEnumerable<Campaign>> GetByNameAsync(string name);
         Task<IEnumerable<Campaign>> GetByStartDateAsync(DateTime startDate);
         Task<IEnumerable<Campaign>> GetByEndDateAsync(DateTime endDate);

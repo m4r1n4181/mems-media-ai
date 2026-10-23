@@ -62,10 +62,10 @@ namespace MusicEventManagementSystem.API.Controllers
             return NoContent();
         }
 
-        [HttpGet("eventId/{eventId}")]
-        public async Task<ActionResult<IEnumerable<CampaignResponseDto>>> GetByEventId(int eventId)
+        [HttpGet("brandId/{brandId}")]
+        public async Task<ActionResult<IEnumerable<CampaignResponseDto>>> GetByBrandId(int brandId)
         {
-            var campaigns = await _campaignService.GetByEventIdAsync(eventId);
+            var campaigns = await _campaignService.GetByBrandIdAsync(brandId);
             return Ok(campaigns);
         }
 

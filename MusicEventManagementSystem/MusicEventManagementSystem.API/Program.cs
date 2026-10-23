@@ -5,6 +5,7 @@ using MusicEventManagementSystem.API.Repositories;
 using MusicEventManagementSystem.API.Repositories.IRepositories;
 using MusicEventManagementSystem.API.Services;
 using MusicEventManagementSystem.API.Services.IService;
+using MusicEventManagementSystem.API.Services.Marketing;
 using MusicEventManagementSystem.Data;
 using MusicEventManagementSystem.Models.Auth;
 using MusicEventManagementSystem.Services.Auth;
@@ -109,6 +110,19 @@ builder.Services.AddScoped<IPerformanceResourceService, PerformanceResourceServi
 
 // 8. Register Media Campaign services
 builder.Services.AddScoped<ICampaignService, CampaignService>();
+
+// Influencer marketing: ml-service client, e-mail sending, outreach workflow
+builder.Services.Configure<MlServiceOptions>(builder.Configuration.GetSection("MlService"));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.Configure<AgencyOptions>(builder.Configuration.GetSection("Agency"));
+builder.Services.AddHttpClient<MlServiceClient>((sp, http) =>
+{
+    var opt = builder.Configuration.GetSection("MlService").Get<MlServiceOptions>() ?? new MlServiceOptions();
+    http.BaseAddress = new Uri(opt.BaseUrl.TrimEnd('/') + "/");
+    http.Timeout = TimeSpan.FromSeconds(opt.TimeoutSeconds);
+});
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IInfluencerService, InfluencerService>();
 builder.Services.AddScoped<IAdTypeService, AdTypeService>();
 builder.Services.AddScoped<IMediaWorkflowService, MediaWorkflowService>();
 builder.Services.AddScoped<IMediaTaskService, MediaTaskService>();
@@ -161,6 +175,10 @@ using (var scope = app.Services.CreateScope())
 
         // Seed data
         await DatabaseSeeder.SeedAsync(context);
+
+        // Client brands for the marketing app; also gives old event campaigns a brand
+        var marketingLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        await MarketingSeeder.SeedAsync(context, app.Environment.ContentRootPath, marketingLogger);
     }
     catch (Exception ex)
     {
