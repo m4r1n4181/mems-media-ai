@@ -284,6 +284,47 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.ToTable("Approvals");
                 });
 
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.Brand", b =>
+                {
+                    b.Property<int>("BrandId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BrandId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Followers")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Handle")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsClient")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Niche")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("TypicalPartnerFollowers")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BrandId");
+
+                    b.HasIndex("Handle")
+                        .IsUnique();
+
+                    b.ToTable("Brands");
+                });
+
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Campaign", b =>
                 {
                     b.Property<int>("CampaignId")
@@ -292,11 +333,14 @@ namespace MusicEventManagementSystem.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CampaignId"));
 
+                    b.Property<int?>("BrandId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Brief")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -310,9 +354,68 @@ namespace MusicEventManagementSystem.API.Migrations
 
                     b.HasKey("CampaignId");
 
-                    b.HasIndex("EventId");
+                    b.HasIndex("BrandId");
 
                     b.ToTable("Campaigns");
+                });
+
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.CampaignCreator", b =>
+                {
+                    b.Property<int>("CampaignCreatorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CampaignCreatorId"));
+
+                    b.Property<int>("CampaignId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ContactedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatorId")
+                        .IsRequired()
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("ModelVersion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReasonsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("SelectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("SuggestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("CampaignCreatorId");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("CampaignId", "CreatorId")
+                        .IsUnique();
+
+                    b.ToTable("CampaignCreators");
                 });
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Communication", b =>
@@ -393,6 +496,33 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.HasIndex("PerformerId");
 
                     b.ToTable("Contracts");
+                });
+
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.Creator", b =>
+                {
+                    b.Property<string>("CreatorId")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Followers")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Niche")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SizeTier")
+                        .HasColumnType("text");
+
+                    b.HasKey("CreatorId");
+
+                    b.ToTable("Creators");
                 });
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Document", b =>
@@ -765,6 +895,59 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("NegotiationUsers");
+                });
+
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.OutreachEmail", b =>
+                {
+                    b.Property<int>("OutreachEmailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OutreachEmailId"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CampaignCreatorId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("ChecksPassed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("EditedByUser")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FromEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Model")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SentByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ToEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("OutreachEmailId");
+
+                    b.HasIndex("CampaignCreatorId");
+
+                    b.ToTable("OutreachEmails");
                 });
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Performance", b =>
@@ -1669,13 +1852,31 @@ namespace MusicEventManagementSystem.API.Migrations
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Campaign", b =>
                 {
-                    b.HasOne("MusicEventManagementSystem.API.Models.Event", "Event")
+                    b.HasOne("MusicEventManagementSystem.API.Models.Brand", "Brand")
                         .WithMany("Campaigns")
-                        .HasForeignKey("EventId")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Brand");
+                });
+
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.CampaignCreator", b =>
+                {
+                    b.HasOne("MusicEventManagementSystem.API.Models.Campaign", "Campaign")
+                        .WithMany("Influencers")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MusicEventManagementSystem.API.Models.Creator", "Creator")
+                        .WithMany("Campaigns")
+                        .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Event");
+                    b.Navigation("Campaign");
+
+                    b.Navigation("Creator");
                 });
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Communication", b =>
@@ -1815,6 +2016,17 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.Navigation("Negotiation");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.OutreachEmail", b =>
+                {
+                    b.HasOne("MusicEventManagementSystem.API.Models.CampaignCreator", "CampaignCreator")
+                        .WithMany("Emails")
+                        .HasForeignKey("CampaignCreatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CampaignCreator");
                 });
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Phase", b =>
@@ -1972,9 +2184,21 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.Navigation("Ads");
                 });
 
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.Brand", b =>
+                {
+                    b.Navigation("Campaigns");
+                });
+
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Campaign", b =>
                 {
                     b.Navigation("Ads");
+
+                    b.Navigation("Influencers");
+                });
+
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.CampaignCreator", b =>
+                {
+                    b.Navigation("Emails");
                 });
 
             modelBuilder.Entity("MusicEventManagementSystem.API.Models.Contract", b =>
@@ -1982,10 +2206,13 @@ namespace MusicEventManagementSystem.API.Migrations
                     b.Navigation("Phase");
                 });
 
-            modelBuilder.Entity("MusicEventManagementSystem.API.Models.Event", b =>
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.Creator", b =>
                 {
                     b.Navigation("Campaigns");
+                });
 
+            modelBuilder.Entity("MusicEventManagementSystem.API.Models.Event", b =>
+                {
                     b.Navigation("TicketTypes");
                 });
 

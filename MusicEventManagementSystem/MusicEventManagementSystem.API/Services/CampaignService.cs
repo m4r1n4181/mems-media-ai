@@ -39,8 +39,9 @@ namespace MusicEventManagementSystem.API.Services
             var campaign = await _campaignRepository.GetByIdAsync(id);
             if (campaign == null) return null;
 
-            if (dto.EventId.HasValue) campaign.EventId = dto.EventId.Value;
+            if (dto.BrandId.HasValue) campaign.BrandId = dto.BrandId.Value;
             if (dto.Name != null) campaign.Name = dto.Name;
+            if (dto.Brief != null) campaign.Brief = dto.Brief;
             if (dto.StartDate.HasValue) campaign.StartDate = dto.StartDate.Value;
             if (dto.EndDate.HasValue) campaign.EndDate = dto.EndDate.Value;
             if (dto.TotalBudget.HasValue) campaign.TotalBudget = dto.TotalBudget.Value;
@@ -59,9 +60,9 @@ namespace MusicEventManagementSystem.API.Services
             return true;
         }
 
-        public async Task<IEnumerable<CampaignResponseDto>> GetByEventIdAsync(int eventId)
+        public async Task<IEnumerable<CampaignResponseDto>> GetByBrandIdAsync(int brandId)
         {
-            var campaigns = await _campaignRepository.GetByEventIdAsync(eventId);
+            var campaigns = await _campaignRepository.GetByBrandIdAsync(brandId);
             return campaigns.Select(MapToResponseDto);
         }
 
@@ -92,8 +93,10 @@ namespace MusicEventManagementSystem.API.Services
         private static CampaignResponseDto MapToResponseDto(Campaign campaign) => new()
         {
             CampaignId = campaign.CampaignId,
-            EventId = campaign.EventId,
+            BrandId = campaign.BrandId,
+            BrandHandle = campaign.Brand?.Handle,
             Name = campaign.Name,
+            Brief = campaign.Brief,
             StartDate = campaign.StartDate,
             EndDate = campaign.EndDate,
             TotalBudget = campaign.TotalBudget,
@@ -102,8 +105,9 @@ namespace MusicEventManagementSystem.API.Services
 
         private static Campaign MapToEntity(CampaignCreateDto dto) => new()
         {
-            EventId = dto.EventId,
+            BrandId = dto.BrandId,
             Name = dto.Name,
+            Brief = dto.Brief,
             StartDate = dto.StartDate,
             EndDate = dto.EndDate,
             TotalBudget = dto.TotalBudget

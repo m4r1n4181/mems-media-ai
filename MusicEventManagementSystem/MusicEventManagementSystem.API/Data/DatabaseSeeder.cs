@@ -1002,12 +1002,11 @@ namespace MusicEventManagementSystem.API.Data
             context.Approvals.AddRange(approvals);
             await context.SaveChangesAsync();
 
-            // 18. Seed Campaigns (requires existing Events)
+            // 18. Seed Campaigns (brands are assigned by MarketingSeeder)
             var campaigns = new List<Campaign>
             {
                 new Campaign
                 {
-                    EventId = 1, // Rock Legends Live
                     Name = "Rock Legends Multi-Platform Campaign",
                     StartDate = DateTime.UtcNow.AddDays(-30),
                     EndDate = DateTime.UtcNow.AddDays(15),
@@ -1015,7 +1014,6 @@ namespace MusicEventManagementSystem.API.Data
                 },
                 new Campaign
                 {
-                    EventId = 2, // Indie Discovery Night
                     Name = "Indie Night Social Media Push",
                     StartDate = DateTime.UtcNow.AddDays(-20),
                     EndDate = DateTime.UtcNow.AddDays(8),
@@ -1023,7 +1021,6 @@ namespace MusicEventManagementSystem.API.Data
                 },
                 new Campaign
                 {
-                    EventId = 3, // Electronic Waves Festival
                     Name = "Electronic Waves Digital Campaign",
                     StartDate = DateTime.UtcNow.AddDays(-25),
                     EndDate = DateTime.UtcNow.AddDays(35),
@@ -1031,7 +1028,6 @@ namespace MusicEventManagementSystem.API.Data
                 },
                 new Campaign
                 {
-                    EventId = 4, // Exit Festival 2025
                     Name = "Exit Festival International Campaign",
                     StartDate = DateTime.UtcNow.AddDays(-45),
                     EndDate = DateTime.UtcNow.AddDays(60),
@@ -1039,7 +1035,6 @@ namespace MusicEventManagementSystem.API.Data
                 },
                 new Campaign
                 {
-                    EventId = 7, // Underground Electronic
                     Name = "Underground Scene Viral Campaign",
                     StartDate = DateTime.UtcNow.AddDays(-10),
                     EndDate = DateTime.UtcNow.AddDays(5),

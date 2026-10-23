@@ -10,7 +10,7 @@ namespace MusicEventManagementSystem.API.Services.IService
         Task<CampaignResponseDto?> UpdateCampaignAsync(int id, CampaignUpdateDto updateDto);
         Task<bool> DeleteCampaignAsync(int id);
 
-        Task<IEnumerable<CampaignResponseDto>> GetByEventIdAsync(int eventId);
+        Task<IEnumerable<CampaignResponseDto>> GetByBrandIdAsync(int brandId);
         Task<IEnumerable<CampaignResponseDto>> GetByNameAsync(string name);
         Task<IEnumerable<CampaignResponseDto>> GetByStartDateAsync(DateTime startDate);
         Task<IEnumerable<CampaignResponseDto>> GetByEndDateAsync(DateTime endDate);
