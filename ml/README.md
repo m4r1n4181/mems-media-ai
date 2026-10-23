@@ -63,4 +63,5 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db
 ## Limitations
 
 Implicit feedback only (no rejected candidates), about half of new partners are never retrieved, offline evaluation
-only, data from 2017–2019. Details in [notebook 03](notebooks/03_ranker.ipynb).
+only, data from 2017–2019. Details in [notebook 03](notebooks/03_ranker.ipynb); why partners are missed, and what
+to try next, in [notebook 04](notebooks/04_error_analysis.ipynb) (`python scripts/error_analysis.py`, ~10 min).

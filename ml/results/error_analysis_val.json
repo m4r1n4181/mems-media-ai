@@ -1,0 +1,151 @@
+{
+  "window": [
+    "2018-10-01",
+    "2019-01-01"
+  ],
+  "new_partnerships": 27069,
+  "brands": 6508,
+  "candidate_recall": 0.47522996785991356,
+  "candidates_per_brand": 1115.6418254456055,
+  "recall_by_source": {
+    "organic": 0.14119472459270752,
+    "knn": 0.2432672060290369,
+    "niche": 0.1088329823783664,
+    "svd": 0.203110569285899,
+    "lgcn": 0.2687206767889468
+  },
+  "only_this_source": {
+    "organic": 0.03239868484243969,
+    "knn": 0.06280246776755699,
+    "niche": 0.027485315305330823,
+    "svd": 0.023901880379770216,
+    "lgcn": 0.05075917100742547
+  },
+  "what_if_recall": {
+    "pop300": 0.4877165761572278,
+    "pop1000": 0.5252502863053677,
+    "niche_top2": 0.4987254793305996
+  },
+  "topics": {
+    "0": [
+      "fashion",
+      "style",
+      "model",
+      "beauty",
+      "outfit",
+      "ootd",
+      "hair",
+      "smile",
+      "makeup",
+      "lifestyle"
+    ],
+    "1": [
+      "feedfeed",
+      "foodie",
+      "f52grams",
+      "foodblogger",
+      "eeeeeats",
+      "instafood",
+      "foodporn",
+      "food",
+      "buzzfeast",
+      "foodphotography"
+    ],
+    "2": [
+      "makeup",
+      "mua",
+      "beauty",
+      "makeupartist",
+      "motd",
+      "wakeupandmakeup",
+      "beautyblogger",
+      "makeupaddict",
+      "makeupjunkie",
+      "skincare"
+    ],
+    "3": [
+      "ootd",
+      "fashionblogger",
+      "styleblogger",
+      "whatiwore",
+      "outfitoftheday",
+      "streetstyle",
+      "fashionista",
+      "wiw",
+      "instastyle",
+      "instafashion"
+    ],
+    "4": [
+      "momlife",
+      "motherhood",
+      "momblogger",
+      "letthembelittle",
+      "motherhoodunplugged",
+      "momswithcameras",
+      "childhoodunplugged",
+      "candidchildhood",
+      "ig_motherhood",
+      "motherhoodthroughinstagram"
+    ],
+    "5": [
+      "fitness",
+      "fitfam",
+      "workout",
+      "motivation",
+      "fit",
+      "fitspo",
+      "gym",
+      "fitnessmotivation",
+      "health",
+      "bodybuilding"
+    ],
+    "6": [
+      "travel",
+      "travelblogger",
+      "wanderlust",
+      "travelgram",
+      "beautifuldestinations",
+      "instatravel",
+      "passionpassport",
+      "travelphotography",
+      "sheisnotlost",
+      "dametraveler"
+    ],
+    "7": [
+      "novababe",
+      "nyfw",
+      "ootd",
+      "sp",
+      "tbt",
+      "plussizefashion",
+      "nyc",
+      "plussize",
+      "linkinbio",
+      "f21xme"
+    ],
+    "8": [
+      "soufeel",
+      "soufeelgals",
+      "soufeelnamenecklace",
+      "soufeelstyle",
+      "soufeellover",
+      "dwforeveryone",
+      "publi",
+      "collaboration",
+      "getanchored",
+      "myrosefieldmoment"
+    ],
+    "9": [
+      "interiordesign",
+      "homedecor",
+      "interior",
+      "bhghome",
+      "interior123",
+      "decor",
+      "interior4all",
+      "interiorstyling",
+      "interiors",
+      "interiorinspo"
+    ]
+  }
+}

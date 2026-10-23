@@ -78,3 +78,13 @@ The test numbers are slightly **higher** than validation. Likely reasons: the mo
 (Jul–Dec 2018 instead of Apr–Sep), brands have more history by 2019, and candidate recall is higher (0.52). The gain
 over the heuristic (+29%) is consistent with walk-forward (+21%, +23%), which is the main evidence that it generalises.
 Popularity bias is visible: for the largest brands the ranker's top-10 median is ~46k followers vs ~26k for the heuristic.
+
+## Error analysis of candidate generation (validation, Oct–Dec 2018)
+
+Candidate recall 47.5% (pair-weighted; 53.7% per-brand average). The ranker puts about half of the retrieved
+partners in its top 50, so both stages lose about half. Misses by cause: creator with history but another niche
+than the brand 46%, creator without a niche (too few hashtags) 20%, same niche 15%, giant brands (>50 new partners
+in 3 months) 14%, creators with almost no brand history 5%. Reading 50 misses showed noisy brand niches for brands
+outside fashion and beauty. Ceiling estimates: niche pool from the brand's top-2 niches +2.3 points (≤300 extra
+candidates per brand), 300 most active paid creators +1.2, 1,000 most active +5.0. Details in
+[notebook 04](notebooks/04_error_analysis.ipynb).
