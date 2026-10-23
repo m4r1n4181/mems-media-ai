@@ -32,12 +32,28 @@
             }
         },
         {
+            "name": "ML service (FastAPI)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "${workspaceFolder}/ml-service/.venv/Scripts/python -m uvicorn app.main:app --port 8000",
+            "cwd": "${workspaceFolder}/ml-service"
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
         }
     ],
     "compounds": [
+        {
+            "name": "MEMS: API + Client + ML service",
+            "configurations": [
+                "API (.NET)",
+                "Client (Vite)",
+                "ML service (FastAPI)"
+            ],
+            "stopAll": true
+        },
         {
             "name": "MEMS: API + Client",
             "configurations": [

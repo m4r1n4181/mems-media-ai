@@ -2,6 +2,7 @@
     "recommendations": [
         "ms-dotnettools.csdevkit",
         "dbaeumer.vscode-eslint",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "ms-python.python"
     ]
 }
